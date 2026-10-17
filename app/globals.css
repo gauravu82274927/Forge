@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 40 20% 98%;
+  --foreground: 30 10% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 30 10% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 30 10% 8%;
+  --primary: 30 10% 9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 40 14% 94%;
+  --secondary-foreground: 30 10% 12%;
+  --muted: 40 14% 94%;
+  --muted-foreground: 30 6% 42%;
+  --accent: 76 85% 52%;
+  --accent-foreground: 76 90% 10%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --success: 150 60% 38%;
+  --warning: 35 90% 48%;
+  --border: 40 12% 88%;
+  --input: 40 12% 84%;
+  --ring: 76 85% 42%;
+  --chart-1: 76 85% 52%;
+  --chart-2: 30 10% 9%;
+  --chart-3: 150 60% 38%;
+  --chart-4: 35 90% 48%;
+  --chart-5: 200 70% 40%;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: 30 10% 6%;
+  --foreground: 40 20% 96%;
+  --card: 30 10% 9%;
+  --card-foreground: 40 20% 96%;
+  --popover: 30 10% 9%;
+  --popover-foreground: 40 20% 96%;
+  --primary: 40 20% 96%;
+  --primary-foreground: 30 10% 9%;
+  --secondary: 30 8% 14%;
+  --secondary-foreground: 40 20% 96%;
+  --muted: 30 8% 14%;
+  --muted-foreground: 40 8% 62%;
+  --accent: 76 85% 52%;
+  --accent-foreground: 76 90% 10%;
+  --destructive: 0 62% 40%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 30 8% 16%;
+  --input: 30 8% 20%;
+  --ring: 76 85% 52%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  ::selection {
+    background: hsl(var(--accent) / 0.5);
+  }
+}
+
+@layer utilities {
+  .grid-texture {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
