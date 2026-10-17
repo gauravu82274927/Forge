@@ -1,14 +1,23 @@
+# dependencies
 node_modules/
+
+# next.js build output
+.next/
+out/
+
+# env files (keep .env.example committed)
 .env
-vite.config.js.timestamp-*.mjs
-vite.config.mjs.timestamp-*.mjs
-vite.config.cjs.timestamp-*.mjs
-vite.config.ts.timestamp-*.mjs
-vite.config.mts.timestamp-*.mjs
-vite.config.cts.timestamp-*.mjs
-vitest.config.js.timestamp-*.mjs
-vitest.config.mjs.timestamp-*.mjs
-vitest.config.cjs.timestamp-*.mjs
-vitest.config.ts.timestamp-*.mjs
-vitest.config.mts.timestamp-*.mjs
-vitest.config.cts.timestamp-*.mjs
+.env*.local
+
+# os / editor
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# vite / vitest timestamps
+*.timestamp-*.mjs
