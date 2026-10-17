@@ -50,8 +50,14 @@ export function ForgeHeroVisual() {
       aria-hidden="true"
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-full transition-opacity duration-500"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500"
         style={{
+          // Soft circular fade instead of a hard rounded-full clip, so the
+          // edge of the spotlight area blends into the page.
+          WebkitMaskImage:
+            'radial-gradient(circle closest-side, black 35%, transparent 100%)',
+          maskImage:
+            'radial-gradient(circle closest-side, black 35%, transparent 100%)',
           background: `radial-gradient(340px circle at ${spot.x}% ${spot.y}%, hsl(76 85% 60% / 0.28), transparent 70%)`,
         }}
       />
