@@ -51,3 +51,46 @@ export function safeUrl(value: string | null | undefined): string | null {
   if (!v) return null;
   return /^https?:\/\//i.test(v) ? v : null;
 }
+
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** Whole calendar days between now and the given date (0 = today), in the viewer's timezone. */
+function daysAgo(d: Date): number {
+  return Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000);
+}
+
+function parse(date: string | null | undefined): Date | null {
+  if (!date) return null;
+  const d = new Date(date);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Clock time in the viewer's locale and timezone, e.g. "9:41 AM". */
+export function formatTime(date: string | null | undefined): string {
+  const d = parse(date);
+  return d ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+}
+
+/** Divider label inside a chat: Today, Yesterday, a weekday this week, otherwise the full date. */
+export function dayLabel(date: string | null | undefined): string {
+  const d = parse(date);
+  if (!d) return '';
+  const n = daysAgo(d);
+  if (n <= 0) return 'Today';
+  if (n === 1) return 'Yesterday';
+  if (n < 7) return d.toLocaleDateString([], { weekday: 'long' });
+  return d.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Short label for the chat list: time if today, Yesterday, a weekday this week, otherwise a date. */
+export function listTimeLabel(date: string | null | undefined): string {
+  const d = parse(date);
+  if (!d) return '';
+  const n = daysAgo(d);
+  if (n <= 0) return formatTime(date);
+  if (n === 1) return 'Yesterday';
+  if (n < 7) return d.toLocaleDateString([], { weekday: 'long' });
+  return d.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
