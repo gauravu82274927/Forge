@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/components/auth-provider';
+import { UserAvatar } from '@/components/user-avatar';
 import {
   acceptFriendRequest,
   fetchMyFriendships,
@@ -252,7 +253,14 @@ export function SearchDialog() {
                     key={p.id}
                     className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-secondary/60"
                   >
-                    <div className="min-w-0">
+                    <UserAvatar
+                      id={p.id}
+                      name={p.display_name}
+                      src={p.avatar_url}
+                      className="h-9 w-9"
+                      onNavigate={() => setOpen(false)}
+                    />
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{p.display_name}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {[p.course, p.college].filter(Boolean).join(' · ') || 'Forge member'}

@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge, CategoryBadge } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
+import { UserAvatar } from '@/components/user-avatar';
 import {
   acceptApplication,
   fetchAcceptedCount,
@@ -171,12 +172,20 @@ export function ApplicationsManager() {
           apps.map((app) => (
             <div key={app.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold">{app.applicant?.display_name ?? 'Applicant'}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {[app.applicant?.course, app.applicant?.college].filter(Boolean).join(' · ')}
-                    {app.applicant?.college ? ' · ' : ''}Applied {formatDate(app.created_at)}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <UserAvatar
+                    id={app.applicant?.id ?? app.applicant_id}
+                    name={app.applicant?.display_name}
+                    src={app.applicant?.avatar_url}
+                    className="h-11 w-11"
+                  />
+                  <div>
+                    <p className="font-semibold">{app.applicant?.display_name ?? 'Applicant'}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {[app.applicant?.course, app.applicant?.college].filter(Boolean).join(' · ')}
+                      {app.applicant?.college ? ' · ' : ''}Applied {formatDate(app.created_at)}
+                    </p>
+                  </div>
                 </div>
                 <StatusBadge status={app.status} />
               </div>

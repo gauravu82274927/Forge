@@ -21,7 +21,7 @@ export interface TeamPostQuery {
 }
 
 const POST_SELECT = `*,
-  owner:profiles!team_posts_owner_id_fkey(id, display_name, college, course, github_url)`;
+  owner:profiles!team_posts_owner_id_fkey(id, display_name, college, course, github_url, avatar_url)`;
 
 export async function fetchTeamPosts(query: TeamPostQuery = {}): Promise<TeamPost[]> {
   let req = supabase
@@ -83,7 +83,7 @@ export async function fetchApplicationsForPost(postId: string): Promise<Applicat
   const { data, error } = await supabase
     .from('applications')
     .select(`*,
-      applicant:profiles!applications_applicant_id_fkey(id, display_name, college, course, skills, github_url)`)
+      applicant:profiles!applications_applicant_id_fkey(id, display_name, college, course, skills, github_url, avatar_url)`)
     .eq('team_post_id', postId)
     .order('created_at', { ascending: true });
   if (error) throw new Error(error.message);
@@ -234,7 +234,7 @@ export async function searchPeople(
   ];
   let req = supabase
     .from('profiles')
-    .select('id, display_name, college, course, skills, experience_level')
+    .select('id, display_name, college, course, skills, experience_level, avatar_url')
     .or(filters.join(','))
     .order('display_name', { ascending: true })
     .limit(limit);
@@ -268,8 +268,8 @@ export async function searchProjects(query: string, limit = 8): Promise<TeamPost
 }
 
 const FRIEND_SELECT = `*,
-  requester:profiles!friendships_requester_id_fkey(id, display_name, college, course),
-  addressee:profiles!friendships_addressee_id_fkey(id, display_name, college, course)`;
+  requester:profiles!friendships_requester_id_fkey(id, display_name, college, course, avatar_url),
+  addressee:profiles!friendships_addressee_id_fkey(id, display_name, college, course, avatar_url)`;
 
 export async function fetchMyFriendships(): Promise<Friendship[]> {
   const { data, error } = await supabase
@@ -432,4 +432,57 @@ export async function fetchApplicationEvents(myId: string): Promise<ApplicationE
     }
   }
   return events.sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+// ---------------------------------------------------------------------------
+// Profile pictures
+// ---------------------------------------------------------------------------
+
+const AVATAR_BUCKET = 'avatars';
+
+/** Storage path inside the bucket for a public avatar URL, or null if it is not one of ours. */
+function avatarPathFromUrl(url: string): string | null {
+  const marker = `/${AVATAR_BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return null;
+  return decodeURIComponent(url.slice(i + marker.length).split('?')[0]);
+}
+
+async function removeAvatarFile(url: string | null | undefined): Promise<void> {
+  if (!url) return;
+  const path = avatarPathFromUrl(url);
+  if (!path) return;
+  // Best effort: a leftover file is harmless, so failures are ignored.
+  await supabase.storage.from(AVATAR_BUCKET).remove([path]);
+}
+
+/** Upload a prepared image as the user's profile picture and return its public URL. */
+export async function uploadAvatar(
+  userId: string,
+  image: Blob,
+  previousUrl?: string | null
+): Promise<string> {
+  const path = `${userId}/${Date.now()}.jpg`;
+  const { error } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, image, { contentType: 'image/jpeg', cacheControl: '31536000' });
+  if (error) throw new Error(error.message);
+
+  const url = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl;
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: url })
+    .eq('id', userId);
+  if (updateError) {
+    await supabase.storage.from(AVATAR_BUCKET).remove([path]);
+    throw new Error(updateError.message);
+  }
+  await removeAvatarFile(previousUrl);
+  return url;
+}
+
+export async function removeAvatar(userId: string, currentUrl: string | null): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', userId);
+  if (error) throw new Error(error.message);
+  await removeAvatarFile(currentUrl);
 }

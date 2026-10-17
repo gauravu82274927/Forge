@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
+import { UserAvatar } from '@/components/user-avatar';
 import {
   fetchConversation,
   fetchLatestMessages,
@@ -23,6 +24,7 @@ interface Friend {
   id: string;
   name: string;
   detail: string;
+  avatar: string | null;
 }
 
 export function Chat() {
@@ -55,6 +57,7 @@ export function Chat() {
               id: f.requester_id === userId ? f.addressee_id : f.requester_id,
               name: p?.display_name ?? 'Forge member',
               detail: [p?.course, p?.college].filter(Boolean).join(' · '),
+              avatar: p?.avatar_url ?? null,
             };
           })
       );
@@ -172,13 +175,18 @@ export function Chat() {
                     onClick={() => router.push(`/messages?with=${f.id}`)}
                     className={`w-full px-4 py-3 text-left hover:bg-secondary/60 ${f.id === selectedId ? 'bg-secondary' : ''}`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`truncate text-sm ${unread ? 'font-bold' : 'font-semibold'}`}>{f.name}</p>
-                      {unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
+                    <div className="flex items-center gap-3">
+                      <UserAvatar id={f.id} name={f.name} src={f.avatar} link={false} className="h-10 w-10" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`truncate text-sm ${unread ? 'font-bold' : 'font-semibold'}`}>{f.name}</p>
+                          {unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
+                        </div>
+                        <p className={`truncate text-xs ${unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          {last ? `${last.sender_id === user.id ? 'You: ' : ''}${last.body}` : f.detail || 'Say hi'}
+                        </p>
+                      </div>
                     </div>
-                    <p className={`truncate text-xs ${unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {last ? `${last.sender_id === user.id ? 'You: ' : ''}${last.body}` : f.detail || 'Say hi'}
-                    </p>
                   </button>
                 </li>
               );
@@ -193,10 +201,11 @@ export function Chat() {
                   <Button variant="ghost" size="icon" className="md:hidden" aria-label="Back" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
-                  <div className="min-w-0">
+                  <UserAvatar id={selected.id} name={selected.name} src={selected.avatar} className="h-10 w-10" />
+                  <Link href={`/u/${selected.id}`} className="min-w-0 hover:underline">
                     <p className="truncate text-sm font-semibold">{selected.name}</p>
                     {selected.detail && <p className="truncate text-xs text-muted-foreground">{selected.detail}</p>}
-                  </div>
+                  </Link>
                 </div>
 
                 <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
@@ -208,7 +217,10 @@ export function Chat() {
                   {messages.map((m) => {
                     const mine = m.sender_id === user.id;
                     return (
-                      <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                      <div key={m.id} className={`flex ${mine ? 'justify-end' : 'items-end justify-start gap-2'}`}>
+                        {!mine && (
+                          <UserAvatar id={selected.id} name={selected.name} src={selected.avatar} className="h-7 w-7 text-[10px]" />
+                        )}
                         <div
                           className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm ${
                             mine ? 'bg-primary text-primary-foreground' : 'bg-secondary'

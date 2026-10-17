@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check, Loader2, MessageCircle, UserMinus, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/forge-badges';
+import { UserAvatar } from '@/components/user-avatar';
 import { useAuth } from '@/components/auth-provider';
 import { acceptFriendRequest, fetchMyFriendships, removeFriendship } from '@/lib/data';
 import type { Friendship } from '@/lib/types';
@@ -67,11 +68,14 @@ export function FriendsPanel({ onPendingChange }: { onPendingChange?: (n: number
   const PersonLine = ({ f }: { f: Friendship }) => {
     const p = other(f);
     return (
-      <div className="min-w-0">
-        <p className="truncate font-semibold">{p?.display_name ?? 'Forge member'}</p>
-        <p className="truncate text-sm text-muted-foreground">
-          {[p?.course, p?.college].filter(Boolean).join(' · ') || ' '}
-        </p>
+      <div className="flex min-w-0 items-center gap-3">
+        <UserAvatar id={p?.id} name={p?.display_name} src={p?.avatar_url} className="h-11 w-11" />
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{p?.display_name ?? 'Forge member'}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {[p?.course, p?.college].filter(Boolean).join(' · ') || ' '}
+          </p>
+        </div>
       </div>
     );
   };

@@ -31,6 +31,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CategoryBadge, StatusBadge } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
+import { UserAvatar } from '@/components/user-avatar';
+import { safeUrl } from '@/lib/format';
 import {
   acceptApplication,
   createReport,
@@ -325,9 +327,17 @@ export function TeamDetails() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Posted by
           </h2>
-          <p className="mt-3 text-lg font-semibold">
-            {post.owner?.display_name ?? 'A student builder'}
-          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <UserAvatar
+              id={post.owner?.id}
+              name={post.owner?.display_name}
+              src={post.owner?.avatar_url}
+              className="h-12 w-12 text-sm"
+            />
+            <p className="text-lg font-semibold">
+              {post.owner?.display_name ?? 'A student builder'}
+            </p>
+          </div>
           {post.owner?.college && (
             <p className="mt-1 text-sm text-muted-foreground">{post.owner.college}</p>
           )}
@@ -343,9 +353,9 @@ export function TeamDetails() {
               </p>
             </>
           )}
-          {post.owner?.github_url && (
+          {safeUrl(post.owner?.github_url) && (
             <a
-              href={post.owner.github_url}
+              href={safeUrl(post.owner?.github_url) ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"

@@ -75,6 +75,7 @@ export interface Profile {
   linkedin_url: string | null;
   preferred_roles: string[];
   availability: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -97,7 +98,7 @@ export interface TeamPost {
   status: PostStatus;
   created_at: string;
   updated_at: string;
-  owner?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'github_url'>;
+  owner?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'github_url' | 'avatar_url'>;
   accepted_count?: number;
   is_demo?: boolean;
 }
@@ -111,7 +112,7 @@ export interface Application {
   created_at: string;
   updated_at: string;
   team_post?: TeamPost;
-  applicant?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'skills' | 'github_url'>;
+  applicant?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'skills' | 'github_url' | 'avatar_url'>;
 }
 
 export interface Report {
@@ -134,13 +135,13 @@ export interface Friendship {
   status: FriendshipStatus;
   created_at: string;
   updated_at: string;
-  requester?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course'>;
-  addressee?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course'>;
+  requester?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'avatar_url'>;
+  addressee?: Pick<Profile, 'id' | 'display_name' | 'college' | 'course' | 'avatar_url'>;
 }
 
 export type PersonResult = Pick<
   Profile,
-  'id' | 'display_name' | 'college' | 'course' | 'skills' | 'experience_level'
+  'id' | 'display_name' | 'college' | 'course' | 'skills' | 'experience_level' | 'avatar_url'
 >;
 
 export interface Message {

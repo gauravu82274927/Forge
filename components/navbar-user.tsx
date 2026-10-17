@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/components/auth-provider';
 
 export function NavbarUser() {
@@ -45,6 +45,7 @@ export function NavbarUser() {
           aria-label="Account menu"
         >
           <Avatar className="h-8 w-8">
+            <AvatarImage src={profile?.avatar_url ?? undefined} alt="" />
             <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
               {initials}
             </AvatarFallback>

@@ -44,3 +44,10 @@ export function experienceLabel(value: string | null | undefined): string {
   };
   return map[value] ?? value;
 }
+
+/** Only allow http(s) links from user-entered fields, so a "javascript:" URL can never become a clickable link. */
+export function safeUrl(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  return /^https?:\/\//i.test(v) ? v : null;
+}

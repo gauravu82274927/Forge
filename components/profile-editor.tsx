@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import {
+  Camera,
   ExternalLink,
   Github,
   GraduationCap,
@@ -10,6 +11,7 @@ import {
   Loader2,
   Save,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SuggestInput } from '@/components/suggest-input';
@@ -25,10 +27,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/components/auth-provider';
-import { fetchProfile, upsertProfile } from '@/lib/data';
+import { fetchProfile, removeAvatar, uploadAvatar, upsertProfile } from '@/lib/data';
+import { AVATAR_TYPES, prepareAvatar } from '@/lib/avatar';
 import {
   AVAILABILITY_OPTIONS,
   EXPERIENCE_LEVELS,
@@ -44,6 +47,8 @@ export function ProfileEditor() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +73,7 @@ export function ProfileEditor() {
             linkedin_url: null,
             preferred_roles: [],
             availability: null,
+            avatar_url: null,
             created_at: '',
             updated_at: '',
           }
@@ -111,6 +117,40 @@ export function ProfileEditor() {
     set(key, arr.includes(skill) ? arr.filter((s) => s !== skill) : [...arr, skill]);
   };
 
+  const onPickPhoto = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoBusy(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const image = await prepareAvatar(file);
+      const url = await uploadAvatar(user.id, image, profile.avatar_url);
+      setProfile({ ...profile, avatar_url: url });
+      await refreshProfile();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const onRemovePhoto = async () => {
+    setPhotoBusy(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await removeAvatar(user.id, profile.avatar_url);
+      setProfile({ ...profile, avatar_url: null });
+      await refreshProfile();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setError(null);
@@ -150,8 +190,9 @@ export function ProfileEditor() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarFallback className="bg-accent text-lg font-bold text-accent-foreground">
+        <Avatar className="h-20 w-20">
+          <AvatarImage src={profile.avatar_url ?? undefined} alt="Your profile picture" />
+          <AvatarFallback className="bg-accent text-xl font-bold text-accent-foreground">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -160,6 +201,34 @@ export function ProfileEditor() {
           <p className="text-sm text-muted-foreground">
             Team owners see this when you apply. Your email stays private.
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept={AVATAR_TYPES.join(',')}
+              className="hidden"
+              onChange={onPickPhoto}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={photoBusy}
+              onClick={() => fileRef.current?.click()}
+            >
+              {photoBusy ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="mr-1.5 h-4 w-4" />
+              )}
+              {profile.avatar_url ? 'Change photo' : 'Upload photo'}
+            </Button>
+            {profile.avatar_url && (
+              <Button type="button" size="sm" variant="ghost" disabled={photoBusy} onClick={onRemovePhoto}>
+                <Trash2 className="mr-1.5 h-4 w-4" /> Remove
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -355,6 +424,7 @@ export function ProfileEditor() {
         <div className="mt-3 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
+              <AvatarImage src={profile.avatar_url ?? undefined} alt="" />
               <AvatarFallback className="bg-accent font-bold text-accent-foreground">
                 {initials}
               </AvatarFallback>
