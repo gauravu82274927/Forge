@@ -1,7 +1,10 @@
 import { supabase } from '@/lib/supabase';
+import { ROLE_OPTIONS, SKILL_OPTIONS } from '@/lib/types';
 import type {
   Application,
   ApplicationStatus,
+  Friendship,
+  PersonResult,
   Profile,
   TeamPost,
 } from '@/lib/types';
@@ -190,5 +193,108 @@ export async function createReport(input: {
   details?: string | null;
 }) {
   const { error } = await supabase.from('reports').insert(input);
+  if (error) throw new Error(error.message);
+}
+
+// ---------------------------------------------------------------------------
+// Search and friends
+// ---------------------------------------------------------------------------
+
+function cleanTerm(raw: string): string {
+  return raw.trim().replace(/[%,()*\\]/g, ' ').replace(/\s+/g, ' ');
+}
+
+/** Tag columns match exactly, so map what was typed onto the real option names. */
+function matchTags(term: string, options: readonly string[]): string[] {
+  const t = term.toLowerCase();
+  return options.filter((o) => o.toLowerCase().includes(t)).slice(0, 5);
+}
+
+function tagFilter(column: string, tags: string[]): string[] {
+  return tags.map((t) => `${column}.cs.{"${t.replace(/"/g, '')}"}`);
+}
+
+/** Search people by name, college, course or a skill/interest tag. */
+export async function searchPeople(
+  query: string,
+  excludeUserId?: string,
+  limit = 8
+): Promise<PersonResult[]> {
+  const term = cleanTerm(query);
+  if (term.length < 2) return [];
+  const skills = matchTags(term, SKILL_OPTIONS);
+  const filters = [
+    `display_name.ilike.%${term}%`,
+    `college.ilike.%${term}%`,
+    `course.ilike.%${term}%`,
+    ...tagFilter('skills', skills),
+    ...tagFilter('interests', skills),
+  ];
+  let req = supabase
+    .from('profiles')
+    .select('id, display_name, college, course, skills, experience_level')
+    .or(filters.join(','))
+    .order('display_name', { ascending: true })
+    .limit(limit);
+  if (excludeUserId) req = req.neq('id', excludeUserId);
+  const { data, error } = await req;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as PersonResult[];
+}
+
+/** Search open listings by title, summary, description, category, role or skill. */
+export async function searchProjects(query: string, limit = 8): Promise<TeamPost[]> {
+  const term = cleanTerm(query);
+  if (term.length < 2) return [];
+  const filters = [
+    `title.ilike.%${term}%`,
+    `summary.ilike.%${term}%`,
+    `description.ilike.%${term}%`,
+    `category.ilike.%${term}%`,
+    ...tagFilter('required_skills', matchTags(term, SKILL_OPTIONS)),
+    ...tagFilter('open_roles', matchTags(term, ROLE_OPTIONS)),
+  ];
+  const { data, error } = await supabase
+    .from('team_posts')
+    .select(POST_SELECT)
+    .eq('status', 'open')
+    .or(filters.join(','))
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as TeamPost[];
+}
+
+const FRIEND_SELECT = `*,
+  requester:profiles!friendships_requester_id_fkey(id, display_name, college, course),
+  addressee:profiles!friendships_addressee_id_fkey(id, display_name, college, course)`;
+
+export async function fetchMyFriendships(): Promise<Friendship[]> {
+  const { data, error } = await supabase
+    .from('friendships')
+    .select(FRIEND_SELECT)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Friendship[];
+}
+
+export async function sendFriendRequest(addresseeId: string): Promise<void> {
+  const { error } = await supabase
+    .from('friendships')
+    .insert({ addressee_id: addresseeId });
+  if (error) {
+    if (error.code === '23505') throw new Error('A request already exists with this person.');
+    throw new Error(error.message);
+  }
+}
+
+export async function acceptFriendRequest(requestId: string): Promise<void> {
+  const { error } = await supabase.rpc('accept_friend_request', { request_id: requestId });
+  if (error) throw new Error(error.message);
+}
+
+/** Cancel a sent request, decline a received one, or remove a friend. */
+export async function removeFriendship(id: string): Promise<void> {
+  const { error } = await supabase.from('friendships').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

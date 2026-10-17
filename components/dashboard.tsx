@@ -26,9 +26,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CategoryBadge, EmptyState, StatusBadge } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
+import { FriendsPanel } from '@/components/friends-panel';
 import {
   acceptApplication,
   fetchMyApplications,
+  fetchMyFriendships,
   fetchMyPosts,
   rejectApplication,
   withdrawApplication,
@@ -45,6 +47,7 @@ export function Dashboard() {
   const [busyApp, setBusyApp] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmWithdraw, setConfirmWithdraw] = useState<string | null>(null);
+  const [friendRequests, setFriendRequests] = useState(0);
 
   const load = useCallback(async (userId: string) => {
     setLoading(true);
@@ -75,6 +78,18 @@ export function Dashboard() {
       setLoading(false);
     }
   }, []);
+
+  // Count of pending friend requests for the tab badge (ignored if it fails).
+  useEffect(() => {
+    if (!user) return;
+    fetchMyFriendships()
+      .then((rows) =>
+        setFriendRequests(
+          rows.filter((f) => f.status === 'pending' && f.addressee_id === user.id).length
+        )
+      )
+      .catch(() => undefined);
+  }, [user]);
 
   useEffect(() => {
     if (user) void load(user.id);
@@ -186,6 +201,9 @@ export function Dashboard() {
           </TabsTrigger>
           <TabsTrigger value="sent">
             Sent <Badge variant="secondary" className="ml-1.5">{outgoing.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="friends">
+            Friends{friendRequests > 0 && <Badge variant="secondary" className="ml-1.5">{friendRequests} new</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -359,6 +377,11 @@ export function Dashboard() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* Friends */}
+        <TabsContent value="friends" className="mt-6">
+          <FriendsPanel onPendingChange={setFriendRequests} />
         </TabsContent>
       </Tabs>
 
