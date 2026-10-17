@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Loader2, LogIn, MailCheck, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,13 +11,20 @@ import { useAuth } from '@/components/auth-provider';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
-  const { signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+
+  // Already signed in (or just verified in another tab/email link): go home.
+  useEffect(() => {
+    if (!loading && user) router.replace('/');
+  }, [loading, user, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +49,16 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       if (mode === 'login') {
         await signIn(email.trim(), password);
       } else {
-        await signUp(email.trim(), password, displayName.trim());
-        setSuccess('Account created! You are signed in.');
+        const { needsVerification } = await signUp(
+          email.trim(),
+          password,
+          displayName.trim()
+        );
+        if (needsVerification) {
+          setVerifyEmail(email.trim());
+        } else {
+          router.push('/');
+        }
       }
     } catch (err) {
       setError((err as Error).message);
@@ -62,6 +78,26 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         </p>
         <Button className="mt-6" variant="outline" asChild>
           <Link href="/teams">Discover Teams</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (verifyEmail) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20 text-center sm:px-6">
+        <MailCheck className="mx-auto h-10 w-10 text-primary" />
+        <h1 className="mt-4 text-2xl font-bold">Verify your account</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          We sent a confirmation email to <strong>{verifyEmail}</strong>. Click the
+          link in that email to verify your account. You will be signed in and
+          taken to the homepage automatically.
+        </p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Can&apos;t find it? Check your spam folder.
+        </p>
+        <Button className="mt-6" variant="outline" asChild>
+          <Link href="/login">Back to sign in</Link>
         </Button>
       </div>
     );
@@ -112,7 +148,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           />
         </div>

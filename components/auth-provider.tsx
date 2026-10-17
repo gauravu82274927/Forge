@@ -12,7 +12,11 @@ interface AuthContextValue {
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string
+  ) => Promise<{ needsVerification: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -68,16 +72,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = React.useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(friendlyAuthError(error.message));
-  }, []);
+    router.push('/');
+  }, [router]);
 
   const signUp = React.useCallback(
     async (email: string, password: string, displayName: string) => {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { display_name: displayName } },
+        options: {
+          data: { display_name: displayName },
+          // After the user clicks the link in the verification email,
+          // Supabase sends them here and signs them in automatically.
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
       if (error) throw new Error(friendlyAuthError(error.message));
+      // Supabase returns an obfuscated user with no identities when the email
+      // is already registered (to avoid leaking which emails exist).
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        throw new Error('An account with this email already exists. Try signing in.');
+      }
+      // No session means email confirmation is required before sign-in.
+      return { needsVerification: !data.session };
     },
     []
   );
@@ -99,6 +116,7 @@ function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('invalid login credentials')) return 'Email or password is incorrect.';
   if (m.includes('already registered')) return 'An account with this email already exists. Try signing in.';
+  if (m.includes('email not confirmed')) return 'Please verify your email first. Check your inbox for the confirmation link.';
   if (m.includes('rate limit')) return 'Too many attempts. Please wait a moment and try again.';
   return message;
 }
