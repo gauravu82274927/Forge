@@ -2,7 +2,9 @@ import { supabase } from '@/lib/supabase';
 import { ROLE_OPTIONS, SKILL_OPTIONS } from '@/lib/types';
 import type {
   Application,
+  ApplicationEvent,
   ApplicationStatus,
+  Message,
   Friendship,
   PersonResult,
   Profile,
@@ -297,4 +299,137 @@ export async function acceptFriendRequest(requestId: string): Promise<void> {
 export async function removeFriendship(id: string): Promise<void> {
   const { error } = await supabase.from('friendships').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+// ---------------------------------------------------------------------------
+// Messages and notifications
+// ---------------------------------------------------------------------------
+
+export async function fetchConversation(otherId: string, myId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(
+      `and(sender_id.eq.${myId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${myId})`
+    )
+    .order('created_at', { ascending: true })
+    .limit(300);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Message[];
+}
+
+export async function sendMessage(recipientId: string, body: string): Promise<void> {
+  const text = body.trim();
+  if (!text) return;
+  const { error } = await supabase
+    .from('messages')
+    .insert({ recipient_id: recipientId, body: text });
+  if (error) {
+    if (error.code === '42501') throw new Error('You can only message people you are friends with.');
+    throw new Error(error.message);
+  }
+}
+
+export async function markConversationRead(otherId: string): Promise<void> {
+  const { error } = await supabase.rpc('mark_conversation_read', { other_id: otherId });
+  if (error) throw new Error(error.message);
+}
+
+/** Unread messages sent to me, newest first, with the sender's name. */
+export async function fetchUnreadMessages(myId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, sender:profiles!messages_sender_id_fkey(id, display_name)')
+    .eq('recipient_id', myId)
+    .is('read_at', null)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Message[];
+}
+
+/** Latest message per friend, so the chat list can show a preview and ordering. */
+export async function fetchLatestMessages(myId: string): Promise<Map<string, Message>> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(`sender_id.eq.${myId},recipient_id.eq.${myId}`)
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  const latest = new Map<string, Message>();
+  for (const m of (data ?? []) as unknown as Message[]) {
+    const other = m.sender_id === myId ? m.recipient_id : m.sender_id;
+    if (!latest.has(other)) latest.set(other, m);
+  }
+  return latest;
+}
+
+export async function fetchNotificationsSeenAt(myId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('notifications_seen_at')
+    .eq('id', myId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { notifications_seen_at?: string } | null)?.notifications_seen_at ?? null;
+}
+
+export async function markNotificationsSeen(myId: string): Promise<string> {
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notifications_seen_at: now })
+    .eq('id', myId);
+  if (error) throw new Error(error.message);
+  return now;
+}
+
+/** New applications to my listings, and accept/decline decisions on mine. */
+export async function fetchApplicationEvents(myId: string): Promise<ApplicationEvent[]> {
+  const { data, error } = await supabase
+    .from('applications')
+    .select(
+      `id, status, applicant_id, created_at, updated_at,
+       team_post:team_posts(id, title),
+       applicant:profiles!applications_applicant_id_fkey(display_name)`
+    )
+    .order('updated_at', { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+
+  type Row = {
+    id: string;
+    status: string;
+    applicant_id: string;
+    created_at: string;
+    updated_at: string;
+    team_post: { id: string; title: string } | null;
+    applicant: { display_name: string } | null;
+  };
+  const events: ApplicationEvent[] = [];
+  for (const r of (data ?? []) as unknown as Row[]) {
+    if (!r.team_post) continue;
+    if (r.applicant_id === myId) {
+      if (r.status === 'accepted' || r.status === 'rejected') {
+        events.push({
+          id: r.id,
+          kind: r.status,
+          created_at: r.updated_at,
+          postId: r.team_post.id,
+          postTitle: r.team_post.title,
+        });
+      }
+    } else if (r.status === 'pending') {
+      events.push({
+        id: r.id,
+        kind: 'applied',
+        created_at: r.created_at,
+        postId: r.team_post.id,
+        postTitle: r.team_post.title,
+        person: r.applicant?.display_name ?? 'A student',
+      });
+    }
+  }
+  return events.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }

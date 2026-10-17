@@ -142,3 +142,24 @@ export type PersonResult = Pick<
   Profile,
   'id' | 'display_name' | 'college' | 'course' | 'skills' | 'experience_level'
 >;
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
+  sender?: Pick<Profile, 'id' | 'display_name'>;
+}
+
+/** Application events for the notification panel. */
+export interface ApplicationEvent {
+  id: string;
+  kind: 'applied' | 'accepted' | 'rejected';
+  created_at: string;
+  postId: string;
+  postTitle: string;
+  /** Who applied (for 'applied'); undefined for decisions on your own applications. */
+  person?: string;
+}

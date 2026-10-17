@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Check, Clock, Loader2, Search, UserPlus, Users } from 'lucide-react';
+import { Check, Clock, Loader2, MessageCircle, Search, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -122,9 +122,11 @@ export function SearchDialog() {
     const busy = busyId === p.id;
     if (rel?.status === 'accepted') {
       return (
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-          <Users className="h-3.5 w-3.5" /> Friends
-        </span>
+        <Button size="sm" variant="outline" asChild>
+          <Link href={`/messages?with=${p.id}`} onClick={() => setOpen(false)}>
+            <MessageCircle className="mr-1 h-4 w-4" /> Message
+          </Link>
+        </Button>
       );
     }
     if (rel && rel.requester_id === user.id) {

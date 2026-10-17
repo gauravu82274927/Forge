@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Loader2, UserMinus, Users, X } from 'lucide-react';
+import Link from 'next/link';
+import { Check, Loader2, MessageCircle, UserMinus, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
@@ -124,9 +125,16 @@ export function FriendsPanel({ onPendingChange }: { onPendingChange?: (n: number
             {friends.map((f) => (
               <div key={f.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
                 <PersonLine f={f} />
-                <Button size="sm" variant="ghost" disabled={busy === f.id} onClick={() => run(f.id, () => removeFriendship(f.id))}>
-                  <Spinner id={f.id} /> <UserMinus className="mr-1 h-4 w-4" /> Remove
-                </Button>
+                <div className="flex shrink-0 gap-2">
+                  <Button size="sm" asChild>
+                    <Link href={`/messages?with=${other(f)?.id ?? ''}`}>
+                      <MessageCircle className="mr-1 h-4 w-4" /> Message
+                    </Link>
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={busy === f.id} onClick={() => run(f.id, () => removeFriendship(f.id))}>
+                    <Spinner id={f.id} /> <UserMinus className="mr-1 h-4 w-4" /> Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
