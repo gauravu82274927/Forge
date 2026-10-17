@@ -144,8 +144,8 @@ export function Chat() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">Messages</h1>
+    <div className="mx-auto max-w-5xl px-3 py-3 sm:px-6 sm:py-8">
+      <h1 className={`text-3xl font-extrabold tracking-tight ${selected ? 'hidden md:block' : ''}`}>Messages</h1>
 
       {error && (
         <p role="alert" className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
@@ -162,9 +162,9 @@ export function Chat() {
           />
         </div>
       ) : (
-        <div className="mt-6 grid overflow-hidden rounded-xl border border-border bg-card md:grid-cols-[17rem_1fr]">
+        <div className={`grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-card md:mt-6 md:grid-cols-[17rem_minmax(0,1fr)] ${selected ? 'mt-0' : 'mt-6'}`}>
           {/* Friend list */}
-          <ul className={`max-h-[70vh] divide-y overflow-y-auto border-border md:border-r ${selected ? 'hidden md:block' : ''}`}>
+          <ul className={`max-h-[calc(100dvh-14rem)] divide-y overflow-y-auto md:max-h-[70vh] border-border md:border-r ${selected ? 'hidden md:block' : ''}`}>
             {sorted.map((f) => {
               const last = latest.get(f.id);
               const unread = last && last.recipient_id === user.id && !last.read_at;
@@ -194,7 +194,7 @@ export function Chat() {
           </ul>
 
           {/* Thread */}
-          <div className={`flex h-[70vh] flex-col ${selected ? '' : 'hidden md:flex'}`}>
+          <div className={`flex h-[calc(100dvh-6.5rem)] min-h-[20rem] min-w-0 flex-col md:h-[70vh] ${selected ? '' : 'hidden md:flex'}`}>
             {selected ? (
               <>
                 <div className="flex items-center gap-2 border-b border-border px-4 py-3">
@@ -236,6 +236,7 @@ export function Chat() {
 
                 <form onSubmit={send} className="flex gap-2 border-t border-border p-3">
                   <Input
+                    className="min-w-0 text-base md:text-sm"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Write a message…"
