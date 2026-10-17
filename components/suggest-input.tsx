@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
-import { searchColleges } from '@/lib/colleges';
+import { searchOptions } from '@/lib/colleges';
 
 interface Props {
   id?: string;
+  options: string[];
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -13,12 +14,12 @@ interface Props {
 }
 
 /** Text input with a suggestion list. Any typed value is allowed. */
-export function CollegeCombobox({ id, value, onChange, placeholder, maxLength }: Props) {
+export function SuggestInput({ id, options: source, value, onChange, placeholder, maxLength }: Props) {
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(-1);
   const wrapRef = React.useRef<HTMLDivElement>(null);
-  const options = React.useMemo(() => searchColleges(value), [value]);
-  const listId = `${id ?? 'college'}-listbox`;
+  const options = React.useMemo(() => searchOptions(source, value), [source, value]);
+  const listId = `${id ?? 'suggest'}-listbox`;
 
   React.useEffect(() => {
     const onDown = (e: MouseEvent) => {

@@ -12,7 +12,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CollegeCombobox } from '@/components/college-combobox';
+import { SuggestInput } from '@/components/suggest-input';
+import { COLLEGES, COURSES } from '@/lib/colleges';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -187,8 +188,9 @@ export function ProfileEditor() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="college">College / university</Label>
-            <CollegeCombobox
+            <SuggestInput
               id="college"
+              options={COLLEGES}
               value={profile.college ?? ''}
               onChange={(v) => set('college', v)}
               placeholder="Start typing your college"
@@ -200,11 +202,13 @@ export function ProfileEditor() {
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="course">Course / field</Label>
-            <Input
+            <SuggestInput
               id="course"
+              options={COURSES}
               value={profile.course ?? ''}
-              onChange={(e) => set('course', e.target.value)}
+              onChange={(v) => set('course', v)}
               placeholder="Computer Science"
+              maxLength={80}
             />
           </div>
           <div className="space-y-1.5">

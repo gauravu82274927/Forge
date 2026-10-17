@@ -90,16 +90,46 @@ export const COLLEGES: string[] = [
   'Nanyang Technological University', 'Tsinghua University', 'University of Tokyo',
 ];
 
-export function searchColleges(query: string, limit = 8): string[] {
+export function searchOptions(source: string[], query: string, limit = 8): string[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const starts: string[] = [];
   const contains: string[] = [];
-  for (const name of Array.from(new Set(COLLEGES))) {
+  for (const name of Array.from(new Set(source))) {
     const n = name.toLowerCase();
     if (n.startsWith(q)) starts.push(name);
     else if (n.includes(q)) contains.push(name);
-    if (starts.length >= limit) break;
   }
   return [...starts, ...contains].slice(0, limit);
 }
+
+// Suggestions for the course / field of study. Any typed value is still allowed.
+export const COURSES: string[] = [
+  // Engineering and computing
+  'Computer Science', 'Computer Science and Engineering', 'Information Technology',
+  'Software Engineering', 'Artificial Intelligence', 'Artificial Intelligence and Machine Learning',
+  'Artificial Intelligence and Data Science', 'Data Science', 'Machine Learning', 'Cyber Security',
+  'Cloud Computing', 'Internet of Things', 'Blockchain Technology', 'Computer Applications (BCA)',
+  'Computer Applications (MCA)', 'Electronics and Communication Engineering',
+  'Electrical Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering',
+  'Civil Engineering', 'Chemical Engineering', 'Aerospace Engineering', 'Automobile Engineering',
+  'Biotechnology', 'Biomedical Engineering', 'Environmental Engineering', 'Industrial Engineering',
+  'Instrumentation Engineering', 'Mechatronics', 'Robotics and Automation', 'Production Engineering',
+  'Metallurgical Engineering', 'Mining Engineering', 'Marine Engineering', 'Textile Engineering',
+  'Agricultural Engineering', 'Petroleum Engineering', 'Materials Science', 'Engineering Physics',
+  'Mathematics and Computing', 'VLSI Design', 'Embedded Systems', 'Game Development',
+  // Sciences
+  'Physics', 'Chemistry', 'Mathematics', 'Statistics', 'Biology', 'Microbiology', 'Biochemistry',
+  'Zoology', 'Botany', 'Geology', 'Environmental Science', 'Neuroscience', 'Cognitive Science',
+  'Food Technology', 'Forensic Science', 'Pharmacy', 'Nursing', 'Medicine (MBBS)', 'Dentistry (BDS)',
+  'Physiotherapy', 'Veterinary Science', 'Agriculture',
+  // Design, arts, business, humanities
+  'Design', 'UI/UX Design', 'Graphic Design', 'Product Design', 'Fashion Design',
+  'Architecture', 'Interior Design', 'Animation and Multimedia', 'Film and Media Studies',
+  'Journalism and Mass Communication', 'Business Administration (BBA)',
+  'Business Administration (MBA)', 'Commerce', 'Economics', 'Finance', 'Marketing',
+  'Accounting', 'Entrepreneurship', 'Management', 'Law (LLB)', 'Public Policy',
+  'Psychology', 'Sociology', 'Political Science', 'History', 'English Literature',
+  'Philosophy', 'Linguistics', 'Education', 'Music', 'Fine Arts', 'Hotel Management',
+  'Liberal Arts', 'Other',
+];
