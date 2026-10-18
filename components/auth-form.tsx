@@ -151,6 +151,16 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             placeholder="At least 8 characters"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           />
+          {mode === 'login' && (
+            <div className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
         </div>
 
         {error && (

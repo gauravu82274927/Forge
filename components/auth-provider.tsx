@@ -18,6 +18,8 @@ interface AuthContextValue {
     displayName: string
   ) => Promise<{ needsVerification: boolean }>;
   signOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -103,9 +105,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }, []);
 
+  const sendPasswordReset = React.useCallback(async (email: string) => {
+    // Supabase answers the same way whether or not the email has an account,
+    // so this never reveals which emails are registered.
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw new Error(friendlyAuthError(error.message));
+  }, []);
+
+  const updatePassword = React.useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(friendlyAuthError(error.message));
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, refreshProfile, signIn, signUp, signOut }}
+      value={{
+        user,
+        profile,
+        loading,
+        refreshProfile,
+        signIn,
+        signUp,
+        signOut,
+        sendPasswordReset,
+        updatePassword,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -117,7 +143,12 @@ function friendlyAuthError(message: string): string {
   if (m.includes('invalid login credentials')) return 'Email or password is incorrect.';
   if (m.includes('already registered')) return 'An account with this email already exists. Try signing in.';
   if (m.includes('email not confirmed')) return 'Please verify your email first. Check your inbox for the confirmation link.';
-  if (m.includes('rate limit')) return 'Too many attempts. Please wait a moment and try again.';
+  if (m.includes('rate limit') || m.includes('only request this once') || m.includes('security purposes'))
+    return 'Too many attempts. Please wait a minute and try again.';
+  if (m.includes('should be different') || m.includes('same password'))
+    return 'Choose a password you have not used before.';
+  if (m.includes('failed to fetch') || m.includes('network'))
+    return 'We could not reach the server. Check your connection and try again.';
   return message;
 }
 
