@@ -330,6 +330,12 @@ export async function sendMessage(recipientId: string, body: string): Promise<vo
   }
 }
 
+/** Delete one of my own messages for everyone. The text is erased on the server. */
+export async function deleteMessage(messageId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_message', { msg_id: messageId });
+  if (error) throw new Error(error.message);
+}
+
 export async function markConversationRead(otherId: string): Promise<void> {
   const { error } = await supabase.rpc('mark_conversation_read', { other_id: otherId });
   if (error) throw new Error(error.message);
@@ -342,6 +348,7 @@ export async function fetchUnreadMessages(myId: string): Promise<Message[]> {
     .select('*, sender:profiles!messages_sender_id_fkey(id, display_name)')
     .eq('recipient_id', myId)
     .is('read_at', null)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);

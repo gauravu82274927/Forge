@@ -151,6 +151,7 @@ export interface Message {
   body: string;
   created_at: string;
   read_at: string | null;
+  deleted_at: string | null;
   sender?: Pick<Profile, 'id' | 'display_name'>;
 }
 
