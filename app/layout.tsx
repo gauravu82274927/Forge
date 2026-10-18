@@ -7,6 +7,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { ForgeAssistant } from '@/components/forge-assistant';
+import { PostHogProvider } from '@/components/posthog-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
