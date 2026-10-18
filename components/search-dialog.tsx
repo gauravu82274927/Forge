@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/components/auth-provider';
+import { track } from '@/lib/analytics';
 import { UserAvatar } from '@/components/user-avatar';
 import {
   acceptFriendRequest,
@@ -58,6 +59,26 @@ export function SearchDialog() {
   React.useEffect(() => {
     if (open) void loadFriendships();
   }, [open, loadFriendships]);
+
+  React.useEffect(() => {
+    if (open) track('search_opened');
+  }, [open]);
+
+  // One event per search, once the person stops typing. Counts only: never the text searched.
+  React.useEffect(() => {
+    const term = query.trim();
+    if (!open || term.length < 3 || loading) return;
+    const t = setTimeout(
+      () =>
+        track('search_performed', {
+          query_length: term.length,
+          people_results: people.length,
+          project_results: projects.length,
+        }),
+      1200
+    );
+    return () => clearTimeout(t);
+  }, [open, query, loading, people, projects]);
 
   // Debounced search.
   React.useEffect(() => {

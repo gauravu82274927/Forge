@@ -13,8 +13,21 @@ export default function PrivacyPage() {
         <h2 className="pt-2 text-lg font-semibold text-foreground">What we collect</h2>
         <p>
           Forge stores the information you put in your profile (name, university,
-          skills, links) and the listings and applications you create. That is
-          all.
+          skills, links) and the listings and applications you create, plus the
+          messages you send to friends. Beyond that we collect basic usage
+          analytics, described below.
+        </p>
+        <h2 className="pt-2 text-lg font-semibold text-foreground">Analytics</h2>
+        <p>
+          We use PostHog, a third-party analytics service, to count visits and
+          see which features get used. It records page views and a short list
+          of actions such as signing up, posting a listing, applying or sending
+          a friend request. It does not receive the text of your messages, what
+          you type into search, or the questions you ask the assistant. Anything
+          after a ? or # in a page address is removed before it is sent. If you
+          are signed in, your activity is linked to an internal account ID, not
+          to your name or email. We do not record sessions, and we switch
+          analytics off if your browser sends a Do Not Track signal.
         </p>
         <h2 className="pt-2 text-lg font-semibold text-foreground">What stays private</h2>
         <p>

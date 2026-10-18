@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { identifyUser, resetAnalytics, track } from '@/lib/analytics';
 import type { Profile } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -51,18 +52,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
       setUser(data.session?.user ?? null);
       setLoading(false);
-      if (data.session?.user) void refreshProfile();
+      if (data.session?.user) {
+        identifyUser(data.session.user.id);
+        void refreshProfile();
+      }
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       setUser(session?.user ?? null);
       if (session?.user) {
+        identifyUser(session.user.id);
         void refreshProfile();
       } else {
         setProfile(null);
       }
-      if (event === 'SIGNED_OUT') router.push('/');
+      if (event === 'SIGNED_OUT') {
+        resetAnalytics();
+        router.push('/');
+      }
     });
 
     return () => {
@@ -74,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = React.useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(friendlyAuthError(error.message));
+    track('login');
     router.push('/');
   }, [router]);
 
@@ -96,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('An account with this email already exists. Try signing in.');
       }
       // No session means email confirmation is required before sign-in.
+      track('sign_up', { needs_verification: !data.session });
       return { needsVerification: !data.session };
     },
     []
@@ -112,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) throw new Error(friendlyAuthError(error.message));
+    track('password_reset_requested');
   }, []);
 
   const updatePassword = React.useCallback(async (newPassword: string) => {

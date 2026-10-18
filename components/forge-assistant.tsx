@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/auth-provider';
 import { supabase } from '@/lib/supabase';
+import { track } from '@/lib/analytics';
 import { SUGGESTIONS } from '@/lib/assistant-knowledge';
 
 // three.js is only downloaded when the browser is idle, not on first paint.
@@ -113,6 +114,7 @@ export function ForgeAssistant() {
   const openPanel = () => {
     setOpen(true);
     setHint(false);
+    track('assistant_opened');
     try {
       sessionStorage.setItem('forge-assistant-hint', '1');
     } catch {
@@ -151,8 +153,10 @@ export function ForgeAssistant() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ messages: next.slice(-10) }),
       });
-      const data = (await res.json().catch(() => ({}))) as { reply?: string };
+      const data = (await res.json().catch(() => ({}))) as { reply?: string; mode?: string };
       if (typeof data.reply === 'string' && data.reply) reply = data.reply;
+      // Never include the question text.
+      track('assistant_question', { mode: data.mode ?? 'unknown' });
     } catch {
       // keep the default reply
     }
@@ -192,6 +196,7 @@ export function ForgeAssistant() {
       );
       return;
     }
+    track('complaint_filed', { category });
     setFiled(true);
     setDetails('');
   };

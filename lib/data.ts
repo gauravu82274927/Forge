@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { track } from '@/lib/analytics';
 import { ROLE_OPTIONS, SKILL_OPTIONS } from '@/lib/types';
 import type {
   Application,
@@ -138,6 +139,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 export async function upsertProfile(profile: Partial<Profile> & { id: string }) {
   const { error } = await supabase.from('profiles').upsert(profile);
   if (error) throw new Error(error.message);
+  track('profile_saved');
 }
 
 export async function createTeamPost(
@@ -149,6 +151,7 @@ export async function createTeamPost(
     .select('id')
     .single();
   if (error) throw new Error(error.message);
+  track('listing_created', { category: post.category ?? null });
   return data.id as string;
 }
 
@@ -168,6 +171,7 @@ export async function submitApplication(teamPostId: string, introMessage: string
     intro_message: introMessage,
   });
   if (error) throw new Error(error.message);
+  track('application_submitted');
 }
 
 export async function withdrawApplication(applicationId: string) {
@@ -176,16 +180,19 @@ export async function withdrawApplication(applicationId: string) {
     .update({ status: 'withdrawn' as ApplicationStatus })
     .eq('id', applicationId);
   if (error) throw new Error(error.message);
+  track('application_withdrawn');
 }
 
 export async function acceptApplication(applicationId: string) {
   const { error } = await supabase.rpc('accept_application', { app_id: applicationId });
   if (error) throw new Error(error.message);
+  track('application_accepted');
 }
 
 export async function rejectApplication(applicationId: string) {
   const { error } = await supabase.rpc('reject_application', { app_id: applicationId });
   if (error) throw new Error(error.message);
+  track('application_declined');
 }
 
 export async function createReport(input: {
@@ -288,11 +295,13 @@ export async function sendFriendRequest(addresseeId: string): Promise<void> {
     if (error.code === '23505') throw new Error('A request already exists with this person.');
     throw new Error(error.message);
   }
+  track('friend_request_sent');
 }
 
 export async function acceptFriendRequest(requestId: string): Promise<void> {
   const { error } = await supabase.rpc('accept_friend_request', { request_id: requestId });
   if (error) throw new Error(error.message);
+  track('friend_request_accepted');
 }
 
 /** Cancel a sent request, decline a received one, or remove a friend. */
@@ -328,6 +337,8 @@ export async function sendMessage(recipientId: string, body: string): Promise<vo
     if (error.code === '42501') throw new Error('You can only message people you are friends with.');
     throw new Error(error.message);
   }
+  // Never include the message text.
+  track('message_sent');
 }
 
 /** Delete one of my own messages for everyone. The text is erased on the server. */
