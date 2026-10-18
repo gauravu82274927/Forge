@@ -115,7 +115,7 @@ export function ForgeHeroVisual() {
           transitionDelay: '700ms',
         }}
       >
-        <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-2 border-accent bg-accent shadow-[0_0_60px_-12px_hsl(76_85%_52%)]">
+        <div className="flex h-28 w-28 items-center justify-center rounded-3xl border-2 border-accent bg-accent shadow-[0_0_60px_-12px_hsl(76_85%_52%),0_20px_60px_-20px_hsl(22_92%_56%)]">
           <span className="text-xl font-black tracking-tight text-accent-foreground">Forge</span>
         </div>
       </div>

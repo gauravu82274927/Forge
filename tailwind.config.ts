@@ -46,6 +46,10 @@ const config: Config = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
+        ember: {
+          DEFAULT: 'hsl(var(--ember))',
+          foreground: 'hsl(var(--ember-foreground))',
+        },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',

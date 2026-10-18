@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: 40 20% 98%;
+  --background: 38 28% 97%;
   --foreground: 30 10% 8%;
   --card: 0 0% 100%;
   --card-foreground: 30 10% 8%;
@@ -17,6 +17,8 @@
   --muted-foreground: 30 6% 42%;
   --accent: 76 85% 52%;
   --accent-foreground: 76 90% 10%;
+  --ember: 22 92% 56%;
+  --ember-foreground: 22 90% 10%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
   --success: 150 60% 38%;
@@ -33,11 +35,11 @@
 }
 
 .dark {
-  --background: 30 10% 6%;
+  --background: 24 14% 6%;
   --foreground: 40 20% 96%;
-  --card: 30 10% 9%;
+  --card: 24 12% 9%;
   --card-foreground: 40 20% 96%;
-  --popover: 30 10% 9%;
+  --popover: 24 12% 9%;
   --popover-foreground: 40 20% 96%;
   --primary: 40 20% 96%;
   --primary-foreground: 30 10% 9%;
@@ -47,6 +49,8 @@
   --muted-foreground: 40 8% 62%;
   --accent: 76 85% 52%;
   --accent-foreground: 76 90% 10%;
+  --ember: 22 92% 58%;
+  --ember-foreground: 22 90% 10%;
   --destructive: 0 62% 40%;
   --destructive-foreground: 0 0% 98%;
   --border: 30 8% 16%;
@@ -73,6 +77,16 @@
       linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
       linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
     background-size: 44px 44px;
+  }
+  /* Lime to ember: the "spark leaving the forge" accent used for highlights. */
+  .bg-forge-gradient {
+    background-image: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--ember)));
+  }
+  .text-forge-gradient {
+    background-image: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--ember)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .text-balance {
     text-wrap: balance;

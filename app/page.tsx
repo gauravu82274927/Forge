@@ -89,6 +89,14 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="grid-texture pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black,transparent)]" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 top-10 h-96 w-96 rounded-full bg-ember/15 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-32 top-40 h-80 w-80 rounded-full bg-accent/15 blur-3xl"
+        />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:pt-24">
           <div>
             <Badge variant="outline" className="mb-5 border-accent/60 bg-accent/15 text-foreground">
@@ -99,7 +107,7 @@ export default function Home() {
               Find your people.{' '}
               <span className="relative inline-block">
                 Build something real.
-                <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-full bg-accent" />
+                <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-full bg-forge-gradient" />
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
@@ -322,7 +330,7 @@ export default function Home() {
               className="pointer-events-none absolute inset-0 opacity-40"
               style={{
                 background:
-                  'radial-gradient(500px circle at 50% 120%, hsl(76 85% 52% / 0.5), transparent 65%)',
+                  'radial-gradient(500px circle at 30% 120%, hsl(76 85% 52% / 0.5), transparent 65%), radial-gradient(420px circle at 75% 130%, hsl(22 92% 56% / 0.45), transparent 65%)',
               }}
             />
             <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">

@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+/**
+ * Forge mark: an "F" drawn as a small network. Three people (nodes) joined
+ * by one stem, which is what the product does: connect builders into a team.
+ * The badge colour is fixed so the mark reads the same in light and dark mode.
+ */
 export function ForgeMark({ className }: { className?: string }) {
   return (
     <svg
@@ -9,11 +14,25 @@ export function ForgeMark({ className }: { className?: string }) {
       aria-hidden="true"
       className={cn('h-7 w-7', className)}
     >
-      <rect width="32" height="32" rx="8" className="fill-foreground" />
-      <path
-        d="M10 23V9h12v3.2h-8.4v3.1H21v3.2h-7.4V23H10Z"
-        className="fill-accent"
+      <rect width="32" height="32" rx="8" fill="hsl(24 12% 8%)" />
+      <rect
+        x="0.5"
+        y="0.5"
+        width="31"
+        height="31"
+        rx="7.5"
+        stroke="hsl(40 20% 96% / 0.16)"
       />
+      <path
+        d="M11 23V9.5h10.5M11 16h7.5"
+        stroke="hsl(76 85% 52%)"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="22.5" cy="9.5" r="2.6" fill="hsl(22 92% 58%)" />
+      <circle cx="19.5" cy="16" r="2.6" fill="hsl(22 92% 58%)" />
+      <circle cx="11" cy="23" r="2.6" fill="hsl(22 92% 58%)" />
     </svg>
   );
 }

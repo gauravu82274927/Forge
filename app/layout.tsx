@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
+import { ForgeAssistant } from '@/components/forge-assistant';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,6 +35,7 @@ export default function RootLayout({
               <Footer />
             </div>
             <Toaster />
+            <ForgeAssistant />
           </AuthProvider>
         </ThemeProvider>
       </body>
