@@ -32,6 +32,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/components/auth-provider';
 import { fetchProfile, removeAvatar, uploadAvatar, upsertProfile } from '@/lib/data';
 import { AVATAR_TYPES, prepareAvatar } from '@/lib/avatar';
+import { parseGithubUsername, parseLeetcodeUsername } from '@/lib/heatmap';
 import {
   AVAILABILITY_OPTIONS,
   EXPERIENCE_LEVELS,
@@ -71,6 +72,7 @@ export function ProfileEditor() {
             portfolio_url: null,
             github_url: null,
             linkedin_url: null,
+            leetcode_url: null,
             preferred_roles: [],
             availability: null,
             avatar_url: null,
@@ -168,6 +170,7 @@ export function ProfileEditor() {
         portfolio_url: profile.portfolio_url?.trim() || null,
         github_url: profile.github_url?.trim() || null,
         linkedin_url: profile.linkedin_url?.trim() || null,
+        leetcode_url: profile.leetcode_url?.trim() || null,
         preferred_roles: profile.preferred_roles,
         availability: profile.availability,
       });
@@ -228,6 +231,9 @@ export function ProfileEditor() {
                 <Trash2 className="mr-1.5 h-4 w-4" /> Remove
               </Button>
             )}
+            <Button asChild size="sm" variant="ghost">
+              <Link href={`/u/${user.id}`}>View public profile</Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -387,6 +393,9 @@ export function ProfileEditor() {
               placeholder="https://github.com/you"
               type="url"
             />
+            {profile.github_url?.trim() && !parseGithubUsername(profile.github_url) && (
+              <p className="text-xs text-destructive">We couldn&apos;t find a username in this link.</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="linkedin">LinkedIn (optional)</Label>
@@ -398,7 +407,23 @@ export function ProfileEditor() {
               type="url"
             />
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="leetcode">LeetCode (optional)</Label>
+            <Input
+              id="leetcode"
+              value={profile.leetcode_url ?? ''}
+              onChange={(e) => set('leetcode_url', e.target.value)}
+              placeholder="https://leetcode.com/u/you"
+              type="url"
+            />
+            {profile.leetcode_url?.trim() && !parseLeetcodeUsername(profile.leetcode_url) && (
+              <p className="text-xs text-destructive">We couldn&apos;t find a username in this link.</p>
+            )}
+          </div>
         </div>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Link GitHub and LeetCode to show your last-year activity heatmaps on your public profile.
+        </p>
 
         <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
           {saved && (

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Check,
   Clock,
+  Code2,
   ExternalLink,
   Github,
   GraduationCap,
@@ -19,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/forge-badges';
 import { UserAvatar } from '@/components/user-avatar';
+import { ProfileHeatmaps } from '@/components/profile-heatmaps';
 import { useAuth } from '@/components/auth-provider';
 import {
   acceptFriendRequest,
@@ -117,6 +119,7 @@ export function PublicProfile({ id }: { id: string }) {
   const github = safeUrl(profile.github_url);
   const linkedin = safeUrl(profile.linkedin_url);
   const portfolio = safeUrl(profile.portfolio_url);
+  const leetcode = safeUrl(profile.leetcode_url);
   const school = [profile.course, profile.college].filter(Boolean).join(' · ');
 
   const action = () => {
@@ -202,6 +205,11 @@ export function PublicProfile({ id }: { id: string }) {
                   <Github className="h-4 w-4" />
                 </a>
               )}
+              {leetcode && (
+                <a href={leetcode} target="_blank" rel="noopener noreferrer" aria-label="LeetCode" className="text-muted-foreground hover:text-foreground">
+                  <Code2 className="h-4 w-4" />
+                </a>
+              )}
               {linkedin && (
                 <a href={linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-foreground">
                   <Linkedin className="h-4 w-4" />
@@ -259,6 +267,8 @@ export function PublicProfile({ id }: { id: string }) {
           <p className="mt-6 text-xs text-muted-foreground">Available: {profile.availability}</p>
         )}
       </div>
+
+      <ProfileHeatmaps githubUrl={profile.github_url} leetcodeUrl={profile.leetcode_url} />
 
       {posts.length > 0 && (
         <section className="mt-8">

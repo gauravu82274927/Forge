@@ -73,6 +73,7 @@ export interface Profile {
   portfolio_url: string | null;
   github_url: string | null;
   linkedin_url: string | null;
+  leetcode_url: string | null;
   preferred_roles: string[];
   availability: string | null;
   avatar_url: string | null;
