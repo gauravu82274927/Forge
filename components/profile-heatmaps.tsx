@@ -55,7 +55,7 @@ function HeatmapBlock({ source }: { source: Source }) {
   const state = useHeatmap(source);
 
   if (state.status === 'loading') {
-    return <div className="h-44 animate-pulse rounded-xl bg-[#262626]" />;
+    return <div className="h-44 animate-pulse rounded-xl bg-secondary" />;
   }
   if (state.status === 'error') {
     return (

@@ -4,12 +4,13 @@ import { useEffect, useRef } from 'react';
 import { ExternalLink } from 'lucide-react';
 import type { HeatDay, HeatLevel } from '@/lib/heatmap';
 
-const COLORS: Record<HeatLevel, string> = {
-  0: '#3a3a3a',
-  1: '#27613a',
-  2: '#2f8f4a',
-  3: '#3fbf5f',
-  4: '#9be9a8',
+// Brand lime (hue 76). Class names are written out in full so Tailwind can see them.
+const LEVEL_CLASS: Record<HeatLevel, string> = {
+  0: 'bg-border',
+  1: 'bg-[hsl(76,70%,85%)] dark:bg-[hsl(76,35%,22%)]',
+  2: 'bg-[hsl(76,75%,70%)] dark:bg-[hsl(76,50%,34%)]',
+  3: 'bg-[hsl(76,85%,52%)] dark:bg-[hsl(76,70%,44%)]',
+  4: 'bg-[hsl(76,90%,32%)] dark:bg-[hsl(76,90%,58%)]',
 };
 const CELL = 10;
 const GAP = 3;
@@ -72,6 +73,10 @@ export function Heatmap({
     if (show) labels.push({ col: i, text: MONTHS[month] });
   });
 
+  const visibleLabels = labels.filter(
+    (l, i) => i === labels.length - 1 || labels[i + 1].col - l.col >= 3
+  );
+
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollLeft = el.scrollWidth;
@@ -80,27 +85,27 @@ export function Heatmap({
   const width = weeks.length * STEP;
 
   return (
-    <div className="rounded-xl bg-[#262626] p-4 text-white sm:p-5">
+    <div className="rounded-xl border border-border bg-card p-4 text-card-foreground sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div>
           <p className="text-lg leading-tight sm:text-xl">
             <span className="font-bold">{total.toLocaleString()}</span>{' '}
-            <span className="text-white/80">{headline}</span>
+            <span className="text-muted-foreground">{headline}</span>
           </p>
           <a
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-1 text-xs text-white/50 hover:text-white/80"
+            className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             {platform} · {username}
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
-        <p className="text-xs text-white/60">
-          Total active days: <span className="font-semibold text-white">{activeDays}</span>
+        <p className="text-xs text-muted-foreground">
+          Total active days: <span className="font-semibold text-foreground">{activeDays}</span>
           <span className="ml-4">
-            Max streak: <span className="font-semibold text-white">{maxStreak}</span>
+            Max streak: <span className="font-semibold text-foreground">{maxStreak}</span>
           </span>
         </p>
       </div>
@@ -132,15 +137,16 @@ export function Heatmap({
                   <span
                     key={c.date}
                     title={exact ? `${c.count} ${unit} on ${when}` : `Activity on ${when}`}
-                    style={{ width: CELL, height: CELL, borderRadius: 2, background: COLORS[c.level] }}
+                    className={`rounded-[2px] ${LEVEL_CLASS[c.level]}`}
+                    style={{ width: CELL, height: CELL }}
                   />
                 );
               })
             )}
           </div>
 
-          <div className="relative mt-2 h-4 text-[11px] text-white/50" style={{ width }}>
-            {labels.map((l) => (
+          <div className="relative mt-2 h-4 text-[11px] text-muted-foreground" style={{ width }}>
+            {visibleLabels.map((l) => (
               <span key={l.col} className="absolute" style={{ left: l.col * STEP }}>
                 {l.text}
               </span>
@@ -149,10 +155,10 @@ export function Heatmap({
         </div>
       </div>
 
-      <div className="mt-1 flex items-center justify-end gap-1.5 text-[11px] text-white/50">
+      <div className="mt-1 flex items-center justify-end gap-1.5 text-[11px] text-muted-foreground">
         Less
         {([0, 1, 2, 3, 4] as HeatLevel[]).map((l) => (
-          <span key={l} style={{ width: CELL, height: CELL, borderRadius: 2, background: COLORS[l] }} />
+          <span key={l} className={`rounded-[2px] ${LEVEL_CLASS[l]}`} style={{ width: CELL, height: CELL }} />
         ))}
         More
       </div>
