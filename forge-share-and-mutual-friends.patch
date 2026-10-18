@@ -1,0 +1,291 @@
+diff --git a/components/public-profile.tsx b/components/public-profile.tsx
+index d7fd615..45ed591 100644
+--- a/components/public-profile.tsx
++++ b/components/public-profile.tsx
+@@ -24,19 +24,21 @@ import { ProfileHeatmaps } from '@/components/profile-heatmaps';
+ import { useAuth } from '@/components/auth-provider';
+ import {
+   acceptFriendRequest,
++  fetchMutualFriends,
+   fetchMyFriendships,
+   fetchMyPosts,
+   fetchProfile,
+   sendFriendRequest,
+ } from '@/lib/data';
+ import { safeUrl } from '@/lib/format';
+-import type { Friendship, Profile, TeamPost } from '@/lib/types';
++import type { Friendship, PersonResult, Profile, TeamPost } from '@/lib/types';
+ 
+ export function PublicProfile({ id }: { id: string }) {
+   const { user, loading: authLoading } = useAuth();
+   const [profile, setProfile] = useState<Profile | null>(null);
+   const [posts, setPosts] = useState<TeamPost[]>([]);
+   const [friendship, setFriendship] = useState<Friendship | null>(null);
++  const [mutuals, setMutuals] = useState<PersonResult[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [busy, setBusy] = useState(false);
+   const [error, setError] = useState<string | null>(null);
+@@ -83,6 +85,24 @@ export function PublicProfile({ id }: { id: string }) {
+     void loadFriendship();
+   }, [loadFriendship]);
+ 
++  useEffect(() => {
++    if (!userId || userId === id) {
++      setMutuals([]);
++      return;
++    }
++    let cancelled = false;
++    fetchMutualFriends(id)
++      .then((list) => {
++        if (!cancelled) setMutuals(list);
++      })
++      .catch(() => {
++        if (!cancelled) setMutuals([]);
++      });
++    return () => {
++      cancelled = true;
++    };
++  }, [userId, id]);
++
+   const run = async (fn: () => Promise<void>) => {
+     setBusy(true);
+     setError(null);
+@@ -225,6 +245,26 @@ export function PublicProfile({ id }: { id: string }) {
+           <div className="shrink-0">{action()}</div>
+         </div>
+ 
++        {mutuals.length > 0 && (
++          <div className="mt-6 flex items-center gap-3">
++            <div className="flex -space-x-2">
++              {mutuals.slice(0, 5).map((m) => (
++                <UserAvatar
++                  key={m.id}
++                  id={m.id}
++                  name={m.display_name}
++                  src={m.avatar_url}
++                  className="h-8 w-8 border-2 border-card text-[10px]"
++                />
++              ))}
++            </div>
++            <p className="text-sm text-muted-foreground">
++              {mutuals.length} mutual friend{mutuals.length > 1 ? 's' : ''}
++              {mutuals.length <= 2 ? `: ${mutuals.map((m) => m.display_name).join(', ')}` : ''}
++            </p>
++          </div>
++        )}
++
+         {profile.bio && (
+           <p className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{profile.bio}</p>
+         )}
+diff --git a/components/share-button.tsx b/components/share-button.tsx
+new file mode 100644
+index 0000000..e07d275
+--- /dev/null
++++ b/components/share-button.tsx
+@@ -0,0 +1,54 @@
++'use client';
++
++import { useState } from 'react';
++import { Check, Link2, Share2 } from 'lucide-react';
++import { Button } from '@/components/ui/button';
++
++interface ShareButtonProps {
++  title: string;
++  /** Path of the page to share, e.g. /teams/123 */
++  path: string;
++}
++
++export function ShareButton({ title, path }: ShareButtonProps) {
++  const [copied, setCopied] = useState(false);
++
++  // Built on click, because window does not exist while the page renders on the server.
++  const buildUrl = () => `${window.location.origin}${path}`;
++
++  const shareToWhatsApp = async () => {
++    const url = buildUrl();
++    const text = `Looking for teammates: "${title}" on Forge. Join here: ${url}`;
++    if (typeof navigator !== 'undefined' && navigator.share) {
++      try {
++        await navigator.share({ title, text, url });
++        return;
++      } catch {
++        // Cancelled or unsupported: fall back to WhatsApp below.
++      }
++    }
++    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
++  };
++
++  const copyLink = async () => {
++    try {
++      await navigator.clipboard.writeText(buildUrl());
++      setCopied(true);
++      setTimeout(() => setCopied(false), 1500);
++    } catch {
++      // Clipboard can be blocked; nothing else to do.
++    }
++  };
++
++  return (
++    <div className="flex flex-wrap gap-2">
++      <Button type="button" variant="outline" size="sm" onClick={() => void shareToWhatsApp()}>
++        <Share2 className="mr-2 h-4 w-4" /> Share
++      </Button>
++      <Button type="button" variant="ghost" size="sm" onClick={() => void copyLink()}>
++        {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
++        {copied ? 'Copied' : 'Copy link'}
++      </Button>
++    </div>
++  );
++}
+diff --git a/components/shareButton.jsx b/components/shareButton.jsx
+deleted file mode 100644
+index da88c0c..0000000
+--- a/components/shareButton.jsx
++++ /dev/null
+@@ -1,31 +0,0 @@
+-import { useState } from "react";
+-
+-export default function ShareButton({ title, path }) {
+-  const [copied, setCopied] = useState(false);
+-  const url = `${window.location.origin}${path}`;
+-  const text = `Looking for teammates: "${title}" on Forge. Join here: ${url}`;
+-
+-  const share = async () => {
+-    if (navigator.share) {
+-      try { await navigator.share({ title, text, url }); return; } catch {}
+-    }
+-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+-  };
+-
+-  const copy = async () => {
+-    await navigator.clipboard.writeText(url);
+-    setCopied(true);
+-    setTimeout(() => setCopied(false), 1500);
+-  };
+-
+-  return (
+-    <div className="flex gap-2">
+-      <button onClick={share} className="rounded-lg bg-lime-300 px-3 py-1.5 font-medium">
+-        Share on WhatsApp
+-      </button>
+-      <button onClick={copy} className="rounded-lg border px-3 py-1.5">
+-        {copied ? "Copied" : "Copy link"}
+-      </button>
+-    </div>
+-  );
+-}
+diff --git a/components/team-details.tsx b/components/team-details.tsx
+index 80a9521..f33f19e 100644
+--- a/components/team-details.tsx
++++ b/components/team-details.tsx
+@@ -32,6 +32,7 @@ import { Label } from '@/components/ui/label';
+ import { CategoryBadge, StatusBadge } from '@/components/forge-badges';
+ import { useAuth } from '@/components/auth-provider';
+ import { UserAvatar } from '@/components/user-avatar';
++import { ShareButton } from '@/components/share-button';
+ import { safeUrl } from '@/lib/format';
+ import {
+   acceptApplication,
+@@ -227,6 +228,9 @@ export function TeamDetails() {
+             {post.title}
+           </h1>
+           <p className="mt-2 max-w-2xl text-muted-foreground">{post.summary}</p>
++          <div className="mt-4">
++            <ShareButton title={post.title} path={`/teams/${post.id}`} />
++          </div>
+         </div>
+         <div className="flex flex-col items-stretch gap-2">
+           {isOwner ? (
+diff --git a/lib/data.ts b/lib/data.ts
+index 4417530..eba51eb 100644
+--- a/lib/data.ts
++++ b/lib/data.ts
+@@ -295,6 +295,20 @@ export async function acceptFriendRequest(requestId: string): Promise<void> {
+   if (error) throw new Error(error.message);
+ }
+ 
++/** Members who are accepted friends of both the signed-in user and `otherId`. */
++export async function fetchMutualFriends(otherId: string): Promise<PersonResult[]> {
++  const { data: ids, error } = await supabase.rpc('mutual_friends', { other_id: otherId });
++  if (error) throw new Error(error.message);
++  const list = (ids ?? []) as unknown as string[];
++  if (list.length === 0) return [];
++  const { data, error: pErr } = await supabase
++    .from('profiles')
++    .select('id, display_name, college, course, skills, experience_level, avatar_url')
++    .in('id', list);
++  if (pErr) throw new Error(pErr.message);
++  return (data ?? []) as unknown as PersonResult[];
++}
++
+ /** Cancel a sent request, decline a received one, or remove a friend. */
+ export async function removeFriendship(id: string): Promise<void> {
+   const { error } = await supabase.from('friendships').delete().eq('id', id);
+diff --git a/supabase/add_mutual_friends.sql b/supabase/add_mutual_friends.sql
+new file mode 100644
+index 0000000..bb4024a
+--- /dev/null
++++ b/supabase/add_mutual_friends.sql
+@@ -0,0 +1,28 @@
++/*
++# Mutual friends
++
++Adds `mutual_friends(other_id)`: returns the ids of people who are accepted
++friends of both the caller and `other_id`. Runs as SECURITY DEFINER because
++RLS on `friendships` only lets people see their own rows, and returns ids only.
++*/
++
++CREATE OR REPLACE FUNCTION public.mutual_friends(other_id uuid)
++RETURNS SETOF uuid
++LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
++  WITH mine AS (
++    SELECT CASE WHEN requester_id = auth.uid() THEN addressee_id ELSE requester_id END AS fid
++    FROM public.friendships
++    WHERE status = 'accepted' AND (requester_id = auth.uid() OR addressee_id = auth.uid())
++  ),
++  theirs AS (
++    SELECT CASE WHEN requester_id = other_id THEN addressee_id ELSE requester_id END AS fid
++    FROM public.friendships
++    WHERE status = 'accepted' AND (requester_id = other_id OR addressee_id = other_id)
++  )
++  SELECT fid FROM mine INTERSECT SELECT fid FROM theirs;
++$$;
++
++REVOKE ALL ON FUNCTION public.mutual_friends(uuid) FROM anon, public;
++GRANT EXECUTE ON FUNCTION public.mutual_friends(uuid) TO authenticated;
++
++NOTIFY pgrst, 'reload schema';
+diff --git a/supabase/migrations/20261018150000_mutual_friends.sql b/supabase/migrations/20261018150000_mutual_friends.sql
+new file mode 100644
+index 0000000..bb4024a
+--- /dev/null
++++ b/supabase/migrations/20261018150000_mutual_friends.sql
+@@ -0,0 +1,28 @@
++/*
++# Mutual friends
++
++Adds `mutual_friends(other_id)`: returns the ids of people who are accepted
++friends of both the caller and `other_id`. Runs as SECURITY DEFINER because
++RLS on `friendships` only lets people see their own rows, and returns ids only.
++*/
++
++CREATE OR REPLACE FUNCTION public.mutual_friends(other_id uuid)
++RETURNS SETOF uuid
++LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
++  WITH mine AS (
++    SELECT CASE WHEN requester_id = auth.uid() THEN addressee_id ELSE requester_id END AS fid
++    FROM public.friendships
++    WHERE status = 'accepted' AND (requester_id = auth.uid() OR addressee_id = auth.uid())
++  ),
++  theirs AS (
++    SELECT CASE WHEN requester_id = other_id THEN addressee_id ELSE requester_id END AS fid
++    FROM public.friendships
++    WHERE status = 'accepted' AND (requester_id = other_id OR addressee_id = other_id)
++  )
++  SELECT fid FROM mine INTERSECT SELECT fid FROM theirs;
++$$;
++
++REVOKE ALL ON FUNCTION public.mutual_friends(uuid) FROM anon, public;
++GRANT EXECUTE ON FUNCTION public.mutual_friends(uuid) TO authenticated;
++
++NOTIFY pgrst, 'reload schema';
