@@ -3,13 +3,30 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Loader2, MessageCircle, Send } from 'lucide-react';
+import { ArrowLeft, Ban, Loader2, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/forge-badges';
 import { useAuth } from '@/components/auth-provider';
 import { UserAvatar } from '@/components/user-avatar';
 import {
+  deleteMessage,
   fetchConversation,
   fetchLatestMessages,
   fetchMyFriendships,
@@ -40,6 +57,8 @@ export function Chat() {
   const [draft, setDraft] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [sending, setSending] = React.useState(false);
+  const [toDelete, setToDelete] = React.useState<Message | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -121,6 +140,22 @@ export function Chat() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteMessage(toDelete.id);
+      await loadThread();
+      void loadList();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setDeleting(false);
+      setToDelete(null);
+    }
+  };
+
   if (authLoading || (user && loading)) {
     return <div className="mx-auto mt-10 h-96 max-w-5xl animate-pulse rounded-xl bg-secondary" />;
   }
@@ -188,8 +223,18 @@ export function Chat() {
                           )}
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`truncate text-xs ${unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {last ? `${last.sender_id === user.id ? 'You: ' : ''}${last.body}` : f.detail || 'Say hi'}
+                          <p
+                            className={`truncate text-xs ${unread ? 'text-foreground' : 'text-muted-foreground'} ${
+                              last?.deleted_at ? 'italic' : ''
+                            }`}
+                          >
+                            {last
+                              ? last.deleted_at
+                                ? last.sender_id === user.id
+                                  ? 'You deleted this message'
+                                  : 'This message was deleted'
+                                : `${last.sender_id === user.id ? 'You: ' : ''}${last.body}`
+                              : f.detail || 'Say hi'}
                           </p>
                           {unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
                         </div>
@@ -240,15 +285,47 @@ export function Chat() {
                           {!mine && (
                             <UserAvatar id={selected.id} name={selected.name} src={selected.avatar} className="h-7 w-7 text-[10px]" />
                           )}
+                          {mine && !m.deleted_at && (
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Message options"
+                                  className="mr-1 self-center rounded-full p-1 text-muted-foreground opacity-60 hover:bg-secondary hover:opacity-100 focus-visible:opacity-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onSelect={() => setToDelete(m)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete for everyone
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                           <div
                             className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${
-                              mine ? 'bg-primary text-primary-foreground' : 'bg-secondary'
+                              m.deleted_at
+                                ? 'border border-dashed border-border bg-card text-muted-foreground'
+                                : mine
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary'
                             }`}
                           >
-                            <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                            {m.deleted_at ? (
+                              <p className="flex items-center gap-1.5 italic">
+                                <Ban className="h-3.5 w-3.5 shrink-0" />
+                                {mine ? 'You deleted this message' : 'This message was deleted'}
+                              </p>
+                            ) : (
+                              <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                            )}
                             <p
                               className={`mt-0.5 text-right text-[10px] ${
-                                mine ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                                mine && !m.deleted_at ? 'text-primary-foreground/70' : 'text-muted-foreground'
                               }`}
                             >
                               {formatTime(m.created_at)}
@@ -283,6 +360,35 @@ export function Chat() {
           </div>
         </div>
       )}
+
+      <AlertDialog
+        open={!!toDelete}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be removed for both of you. {selected?.name ?? 'They'} will see &quot;This message was deleted&quot;
+              instead. This can&apos;t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {deleting ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
