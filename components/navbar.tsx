@@ -4,6 +4,7 @@ import { NavbarUser } from '@/components/navbar-user';
 import { SearchDialog } from '@/components/search-dialog';
 import { NotificationsBell } from '@/components/notifications-bell';
 import { MessagesLink } from '@/components/messages-link';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const links = [
   { href: '/teams', label: 'Discover Teams' },
@@ -29,10 +30,11 @@ export function Navbar() {
             <MessagesLink variant="tab" />
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <SearchDialog />
           <MessagesLink variant="icon" />
           <NotificationsBell />
+          <ThemeToggle />
           <NavbarUser />
         </div>
       </div>
