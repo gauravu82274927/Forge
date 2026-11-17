@@ -5,7 +5,7 @@ Find your people. Build something real.
 Forge is a platform where students discover project teams, apply to join with
 a short intro, and manage applications, for hackathons, side projects, open
 source, and everything in between.
-
+ 
 ## Features
 
 - **Discover Teams**: search, filter by category / experience / commitment, and sort by newest, deadline, or open positions
