@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/forge-badges';
 import { UserAvatar } from '@/components/user-avatar';
 import { ProfileHeatmaps } from '@/components/profile-heatmaps';
+import { ProfileActivity } from '@/components/profile-activity';
 import { useAuth } from '@/components/auth-provider';
 import {
   acceptFriendRequest,
@@ -268,6 +269,7 @@ export function PublicProfile({ id }: { id: string }) {
         )}
       </div>
 
+      <ProfileActivity key={id + ':' + (userId ?? '')} id={id} userId={userId} />
       <ProfileHeatmaps githubUrl={profile.github_url} leetcodeUrl={profile.leetcode_url} />
 
       {posts.length > 0 && (
