@@ -20,6 +20,7 @@ type Source = (typeof sources)[number];
 type Event = {
   event_name: string;
   event_url: string;
+  event_summary?: string | null;
 };
 
 const featuredEvent = {
@@ -83,6 +84,7 @@ export function HackathonsHub() {
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formEvent, setFormEvent] = useState<Event | null>(null);
+  const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
@@ -112,6 +114,31 @@ export function HackathonsHub() {
   const active = filtered.find(event => event.event_url === selected) ?? filtered[0];
   const participants = listings.filter(listing => listing.event_url === active?.event_url);
 
+  async function importPreview(form: HTMLFormElement | null) {
+    if (!form) return;
+    const link = form.elements.namedItem('event_url') as HTMLInputElement;
+    if (!link.reportValidity()) return;
+    const originalUrl = link.value;
+    setImporting(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/hackathon-preview?' + new URLSearchParams({ url: originalUrl }));
+      const preview = await response.json();
+      if (originalUrl !== link.value || !form.isConnected) return;
+      if (!response.ok) throw new Error(preview.error);
+      link.value = preview.eventUrl;
+      (form.elements.namedItem('event_name') as HTMLInputElement).value = preview.title;
+      (form.elements.namedItem('event_summary') as HTMLTextAreaElement).value = preview.summary;
+      (form.elements.namedItem('source') as HTMLSelectElement).value = 'Devfolio';
+      setNotice('Review the imported details before publishing.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not import event details.');
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
@@ -125,6 +152,7 @@ export function HackathonsHub() {
         event_name: value('event_name'),
         event_url: url,
         source: value('source'),
+        ...(value('event_summary') ? { event_summary: value('event_summary') } : {}),
         status: value('status'),
         details: value('details'),
         team_url: value('team_url') ? publicUrl(value('team_url')).href : null,
@@ -181,6 +209,15 @@ export function HackathonsHub() {
           <h2 className="text-lg font-semibold sm:col-span-2">Post a hackathon listing</h2>
           <label className="grid gap-1.5 text-sm">Hackathon name<Input name="event_name" required minLength={2} maxLength={100} defaultValue={formEvent?.event_name} /></label>
           <label className="grid gap-1.5 text-sm">Official event link<Input name="event_url" required type="url" maxLength={1500} defaultValue={formEvent?.event_url} placeholder="https://…" /></label>
+          <div className="sm:col-span-2">
+            <Button type="button" variant="outline" disabled={importing || busy}
+              onClick={event => void importPreview(event.currentTarget.form)}>
+              {importing ? 'Importing…' : 'Import from link'}
+            </Button>
+          </div>
+          <label className="grid gap-1.5 text-sm sm:col-span-2">Event overview (optional)
+            <Textarea name="event_summary" maxLength={500} rows={2} defaultValue={formEvent?.event_summary ?? ''} />
+          </label>
           <label className="grid gap-1.5 text-sm">Event platform
             <select name="source" className="h-10 rounded-md border bg-background px-3"
               defaultValue={formEvent ? sourceFromUrl(formEvent.event_url) : ''} required>
@@ -195,7 +232,7 @@ export function HackathonsHub() {
           </select></label>
           <label className="grid gap-1.5 text-sm sm:col-span-2">Roles, skills, or what you plan to build<Textarea name="details" maxLength={500} rows={3} /></label>
           <p className="text-sm text-muted-foreground sm:col-span-2">Use the same official event link to appear with other participants. Post only links you want to share publicly.</p>
-          <div><Button type="submit" disabled={busy}>{busy ? 'Publishing…' : 'Publish listing'}</Button></div>
+          <div><Button type="submit" disabled={busy || importing}>{busy ? 'Publishing…' : 'Publish listing'}</Button></div>
         </form>
       )}
 
@@ -239,6 +276,13 @@ export function HackathonsHub() {
                   </dl>
                 </section>
               )}
+              {active.event_url !== featuredEvent.event_url && (() => {
+                const summary = participants.find(listing => listing.event_summary)?.event_summary;
+                return summary ? <section className="rounded-xl border bg-card p-5">
+                  <h3 className="font-semibold">About the event</h3>
+                  <p className="mt-2 break-words text-sm text-muted-foreground">{summary}</p>
+                </section> : null;
+              })()}
               <h3 className="text-lg font-semibold">People and teams</h3>
               {participants.length === 0 && <p className="rounded-xl border p-5 text-sm text-muted-foreground">No one has posted for this event yet.</p>}
               {participants.map(listing => (
