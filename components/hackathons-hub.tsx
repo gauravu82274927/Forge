@@ -14,11 +14,35 @@ const statuses = {
   participating: 'Participating',
 };
 
-type Listing = {
-  id: string;
-  owner_id: string;
+const sources = ['Devpost', 'Devfolio', 'Unstop', 'Other'] as const;
+type Source = (typeof sources)[number];
+
+type Event = {
   event_name: string;
   event_url: string;
+};
+
+const featuredEvent = {
+  event_name: 'Food for Thought 2.0',
+  event_url: 'https://foodforthoughtchallenge.in/',
+};
+
+function sourceFromUrl(value: string): Source {
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    if (host === 'devpost.com' || host.endsWith('.devpost.com')) return 'Devpost';
+    if (host === 'devfolio.co' || host.endsWith('.devfolio.co')) return 'Devfolio';
+    if (host === 'unstop.com' || host.endsWith('.unstop.com')) return 'Unstop';
+  } catch {
+    return 'Other';
+  }
+  return 'Other';
+}
+
+type Listing = Event & {
+  id: string;
+  owner_id: string;
+  source?: Source | null;
   team_url: string | null;
   application_url: string | null;
   status: keyof typeof statuses;
@@ -58,13 +82,13 @@ export function HackathonsHub() {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formEvent, setFormEvent] = useState<Listing | null>(null);
+  const [formEvent, setFormEvent] = useState<Event | null>(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
   async function refresh() {
     const { data, error } = await supabase.from('hackathon_listings')
-      .select('id,owner_id,event_name,event_url,team_url,application_url,status,details,owner:profiles(display_name)')
+      .select('*,owner:profiles(display_name)')
       .order('created_at', { ascending: false });
     setLoading(false);
     if (error) {
@@ -83,7 +107,7 @@ export function HackathonsHub() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const events = Array.from(new Map(listings.map(listing => [listing.event_url, listing])).values());
+  const events = Array.from(new Map<string, Event>([...listings, featuredEvent].map(event => [event.event_url, event])).values());
   const filtered = events.filter(event => event.event_name.toLowerCase().includes(query.trim().toLowerCase()));
   const active = filtered.find(event => event.event_url === selected) ?? filtered[0];
   const participants = listings.filter(listing => listing.event_url === active?.event_url);
@@ -100,6 +124,7 @@ export function HackathonsHub() {
       const record = {
         event_name: value('event_name'),
         event_url: url,
+        source: value('source'),
         status: value('status'),
         details: value('details'),
         team_url: value('team_url') ? publicUrl(value('team_url')).href : null,
@@ -156,6 +181,13 @@ export function HackathonsHub() {
           <h2 className="text-lg font-semibold sm:col-span-2">Post a hackathon listing</h2>
           <label className="grid gap-1.5 text-sm">Hackathon name<Input name="event_name" required minLength={2} maxLength={100} defaultValue={formEvent?.event_name} /></label>
           <label className="grid gap-1.5 text-sm">Official event link<Input name="event_url" required type="url" maxLength={1500} defaultValue={formEvent?.event_url} placeholder="https://…" /></label>
+          <label className="grid gap-1.5 text-sm">Event platform
+            <select name="source" className="h-10 rounded-md border bg-background px-3"
+              defaultValue={formEvent ? sourceFromUrl(formEvent.event_url) : ''} required>
+              <option value="" disabled>Select a platform</option>
+              {sources.map(source => <option key={source}>{source}</option>)}
+            </select>
+          </label>
           <label className="grid gap-1.5 text-sm">Public team link (optional)<Input name="team_url" type="url" maxLength={1500} placeholder="https://…" /></label>
           <label className="grid gap-1.5 text-sm">Public application link (optional)<Input name="application_url" type="url" maxLength={1500} placeholder="https://…" /></label>
           <label className="grid gap-1.5 text-sm">Your status<select name="status" className="h-10 rounded-md border bg-background px-3">
@@ -191,14 +223,27 @@ export function HackathonsHub() {
                 <h2 className="break-words text-2xl font-bold">{active.event_name}</h2>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Users size={16} aria-hidden />{participants.length} on Forge</span>
-                  <External url={active.event_url} label="Official event page" />
+                  <External url={active.event_url} label={active.event_url === featuredEvent.event_url ? "Official details and registration" : "Official event page"} />
                   {userId && <Button size="sm" variant="outline" onClick={() => { setFormEvent(active); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Post for this event</Button>}
                 </div>
               </div>
+              {active.event_url === featuredEvent.event_url && (
+                <section className="space-y-4 rounded-xl border bg-card p-5 sm:p-7">
+                  <h3 className="text-lg font-semibold">About the event</h3>
+                  <p className="text-sm text-muted-foreground">Swiggy’s student case study competition asks teams to identify a need on campus and propose a solution for college students in India.</p>
+                  <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                    <div><dt className="text-muted-foreground">Organizer</dt><dd className="font-medium">Swiggy</dd></div>
+                    <div><dt className="text-muted-foreground">Team size</dt><dd className="font-medium">2–4 students from the same college</dd></div>
+                    <div><dt className="text-muted-foreground">Registration closes</dt><dd className="font-medium">25 November 2026</dd></div>
+                    <div><dt className="text-muted-foreground">Submission deadline (tentative)</dt><dd className="font-medium">15 December 2026</dd></div>
+                  </dl>
+                </section>
+              )}
               <h3 className="text-lg font-semibold">People and teams</h3>
+              {participants.length === 0 && <p className="rounded-xl border p-5 text-sm text-muted-foreground">No one has posted for this event yet.</p>}
               {participants.map(listing => (
                 <article key={listing.id} className="rounded-xl border bg-card p-5">
-                  <p className="mb-2 text-sm font-medium text-muted-foreground">{statuses[listing.status]}</p>
+                  <p className="mb-2 text-sm font-medium text-muted-foreground">{statuses[listing.status]} · {listing.source ?? sourceFromUrl(listing.event_url)}</p>
                   <Link className="font-semibold hover:underline" href={'/u/' + listing.owner_id}>{listing.owner?.display_name || 'Forge builder'}</Link>
                   {listing.details && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{listing.details}</p>}
                   <div className="mt-3 flex flex-wrap items-center gap-4">
