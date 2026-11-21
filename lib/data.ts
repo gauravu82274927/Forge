@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { track } from '@/lib/analytics';
+import { requestMatchRefresh } from '@/lib/matchmaking';
 import { ROLE_OPTIONS, SKILL_OPTIONS } from '@/lib/types';
 import type {
   Application,
@@ -140,6 +141,7 @@ export async function upsertProfile(profile: Partial<Profile> & { id: string }) 
   const { error } = await supabase.from('profiles').upsert(profile);
   if (error) throw new Error(error.message);
   track('profile_saved');
+  void requestMatchRefresh('profile', profile.id);
 }
 
 export async function createTeamPost(
@@ -152,12 +154,14 @@ export async function createTeamPost(
     .single();
   if (error) throw new Error(error.message);
   track('listing_created', { category: post.category ?? null });
+  void requestMatchRefresh('team', data.id);
   return data.id as string;
 }
 
 export async function updateTeamPost(id: string, changes: Partial<TeamPost>) {
   const { error } = await supabase.from('team_posts').update(changes).eq('id', id);
   if (error) throw new Error(error.message);
+  void requestMatchRefresh('team', id);
 }
 
 export async function deleteTeamPost(id: string) {
