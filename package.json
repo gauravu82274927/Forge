@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:matchmaking": "node --test tests/matchmaking.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -74,6 +75,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.17",
+    "@electric-sql/pglite-pgvector": "0.0.18",
     "@types/three": "^0.169.0"
   }
 }
