@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, RefreshCw, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { fetchMatches, requestMatchRefresh, type MatchResult } from '@/lib/matchmaking';
@@ -35,6 +36,41 @@ export function MatchmakingPanel({ teamId, revision = '' }: { teamId?: string; r
     void load();
     return () => { active = false; };
   }, [userId, teamId, profile?.updated_at, refresh, revision]);
+  const [invited, setInvited] = useState<string[]>([]);
+  const [inviteBusy, setInviteBusy] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState('');
+
+  useEffect(() => {
+    setInvited([]);
+    setInviteNotice('');
+    if (!teamId || !userId) return;
+    let active = true;
+    void supabase.from('team_invitations').select('recipient_id')
+      .eq('team_post_id', teamId).eq('sender_id', userId)
+      .then(({ data }) => {
+        if (active && data) setInvited(previous => Array.from(new Set([...previous, ...data.map(row => row.recipient_id)])));
+      });
+    return () => { active = false; };
+  }, [teamId, userId]);
+
+  async function invite(recipient: string) {
+    if (!teamId || inviteBusy) return;
+    setInviteBusy(recipient);
+    setInviteNotice('');
+    try {
+      const { error } = await supabase.rpc('invite_to_team', {
+        target_team: teamId, target_recipient: recipient,
+      });
+      if (error) throw error;
+      setInvited(previous => [...previous, recipient]);
+      setInviteNotice('Invitation sent.');
+    } catch (error) {
+      setInviteNotice((error as { message?: string })?.message || 'Could not send the invitation.');
+    } finally {
+      setInviteBusy(null);
+    }
+  }
+
   if (!user) return null;
   return (
     <section aria-label={teamId ? 'Recommended teammates' : 'AI Picks for You'} className="my-8 rounded-2xl border border-primary/20 bg-card p-5 sm:p-6">
@@ -74,10 +110,16 @@ export function MatchmakingPanel({ teamId, revision = '' }: { teamId?: string; r
                 {row.details.missing_skills.length > 0 && <p className="mt-2">Still needed: {row.details.missing_skills.join(', ')}</p>}
                 <p className="mt-2">{row.details.method === 'keyword' ? 'Using keyword matching while semantic matching is unavailable. ' : ''}Fit is a ranking signal, not a prediction of success. Missing experience or availability receives a neutral score.</p>
               </details>
+              {teamId && <Button type="button" size="sm" className="mr-3 mt-3"
+                disabled={inviteBusy !== null || invited.includes(row.id)}
+                onClick={() => void invite(row.id)}>
+                {invited.includes(row.id) ? 'Invited' : inviteBusy === row.id ? 'Sending…' : 'Invite to team'}
+              </Button>}
               <Link href={teamId ? `/u/${row.id}` : `/teams/${row.id}`} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">{teamId ? 'View profile' : 'Explore team'}<ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link>
             </article>
           ))}</div>}
       </div>
+      {inviteNotice && <p role="status" className="mt-3 text-sm">{inviteNotice}</p>}
     </section>
   );
 }

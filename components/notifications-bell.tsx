@@ -28,6 +28,10 @@ import {
 import { formatDate } from '@/lib/format';
 import type { ApplicationEvent, Friendship, Message } from '@/lib/types';
 
+import { supabase } from '@/lib/supabase';
+
+type TeamInvite = { team_post_id: string; created_at: string; team: { title: string } | null; sender: { display_name: string } | null };
+
 const POLL_MS = 30_000;
 
 export function NotificationsBell() {
@@ -36,6 +40,7 @@ export function NotificationsBell() {
   const [requests, setRequests] = React.useState<Friendship[]>([]);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [events, setEvents] = React.useState<ApplicationEvent[]>([]);
+  const [invites, setInvites] = React.useState<TeamInvite[]>([]);
   const [seenAt, setSeenAt] = React.useState<string | null>(null);
   // Snapshot of "last seen" taken when the panel opened, so new items stay
   // highlighted while it is open even though we mark everything as seen.
@@ -48,17 +53,23 @@ export function NotificationsBell() {
   const load = React.useCallback(async () => {
     if (!userId) return;
     // Each source is independent, so one missing table does not hide the rest.
-    const [fr, msg, ev, seen] = await Promise.allSettled([
+    const [fr, msg, ev, seen, invitations] = await Promise.allSettled([
       fetchMyFriendships(),
       fetchUnreadMessages(userId),
       fetchApplicationEvents(userId),
       fetchNotificationsSeenAt(userId),
+      supabase.from('team_invitations')
+        .select('team_post_id,created_at,team:team_posts(title),sender:profiles!team_invitations_sender_id_fkey(display_name)')
+        .eq('recipient_id', userId).order('created_at', { ascending: false }).limit(20),
     ]);
     if (fr.status === 'fulfilled') {
       setRequests(fr.value.filter((f) => f.status === 'pending' && f.addressee_id === userId));
     }
     if (msg.status === 'fulfilled') setMessages(msg.value);
     if (ev.status === 'fulfilled') setEvents(ev.value);
+    if (invitations.status === 'fulfilled' && !invitations.value.error) {
+      setInvites((invitations.value.data ?? []) as unknown as TeamInvite[]);
+    }
     if (seen.status === 'fulfilled') setSeenAt(seen.value);
   }, [userId]);
 
@@ -67,6 +78,7 @@ export function NotificationsBell() {
       setRequests([]);
       setMessages([]);
       setEvents([]);
+      setInvites([]);
       return;
     }
     void load();
@@ -83,6 +95,7 @@ export function NotificationsBell() {
     !since || e.created_at > since;
 
   const unreadCount =
+    invites.filter(invite => !seenAt || invite.created_at > seenAt).length +
     requests.length + messages.length + events.filter((e) => isNewEvent(e, seenAt)).length;
 
   const onOpenChange = async (next: boolean) => {
@@ -121,7 +134,7 @@ export function NotificationsBell() {
     else chats.set(m.sender_id, { name: m.sender?.display_name ?? 'Someone', count: 1, last: m });
   }
 
-  const empty = requests.length === 0 && chats.size === 0 && events.length === 0;
+  const empty = requests.length === 0 && chats.size === 0 && events.length === 0 && invites.length === 0;
   const close = () => setOpen(false);
 
   return (
@@ -216,6 +229,21 @@ export function NotificationsBell() {
                   <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                     {c.count}
                   </span>
+                </Link>
+              ))}
+            </section>
+          )}
+
+          {invites.length > 0 && (
+            <section>
+              <h3 className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Team invitations</h3>
+              {invites.map(invite => (
+                <Link key={invite.team_post_id} href={`/teams/${invite.team_post_id}`} onClick={close}
+                  className="block px-4 py-2 text-sm hover:bg-secondary/60">
+                  <span className="font-medium">{invite.sender?.display_name ?? 'A team owner'}</span>
+                  {' invited you to '}
+                  <span className="font-medium">{invite.team?.title ?? 'their team'}</span>
+                  <span className="block text-xs text-muted-foreground">View listing and apply</span>
                 </Link>
               ))}
             </section>
