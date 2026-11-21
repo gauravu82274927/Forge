@@ -30,7 +30,7 @@ import type { ApplicationEvent, Friendship, Message } from '@/lib/types';
 
 import { supabase } from '@/lib/supabase';
 
-type TeamInvite = { team_post_id: string; created_at: string; team: { title: string } | null; sender: { display_name: string } | null };
+type TeamInvite = { status?: 'pending' | 'accepted' | 'declined'; team_post_id: string; created_at: string; team: { title: string } | null; sender: { display_name: string } | null };
 
 const POLL_MS = 30_000;
 
@@ -59,7 +59,7 @@ export function NotificationsBell() {
       fetchApplicationEvents(userId),
       fetchNotificationsSeenAt(userId),
       supabase.from('team_invitations')
-        .select('team_post_id,created_at,team:team_posts(title),sender:profiles!team_invitations_sender_id_fkey(display_name)')
+        .select('*,team:team_posts(title),sender:profiles!team_invitations_sender_id_fkey(display_name)')
         .eq('recipient_id', userId).order('created_at', { ascending: false }).limit(20),
     ]);
     if (fr.status === 'fulfilled') {
@@ -95,7 +95,7 @@ export function NotificationsBell() {
     !since || e.created_at > since;
 
   const unreadCount =
-    invites.filter(invite => !seenAt || invite.created_at > seenAt).length +
+    invites.filter(invite => (!invite.status || invite.status === 'pending') && (!seenAt || invite.created_at > seenAt)).length +
     requests.length + messages.length + events.filter((e) => isNewEvent(e, seenAt)).length;
 
   const onOpenChange = async (next: boolean) => {
@@ -238,13 +238,33 @@ export function NotificationsBell() {
             <section>
               <h3 className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Team invitations</h3>
               {invites.map(invite => (
-                <Link key={invite.team_post_id} href={`/teams/${invite.team_post_id}`} onClick={close}
-                  className="block px-4 py-2 text-sm hover:bg-secondary/60">
+                <div key={invite.team_post_id} className="px-4 py-2 text-sm">
                   <span className="font-medium">{invite.sender?.display_name ?? 'A team owner'}</span>
                   {' invited you to '}
-                  <span className="font-medium">{invite.team?.title ?? 'their team'}</span>
-                  <span className="block text-xs text-muted-foreground">View listing and apply</span>
-                </Link>
+                  <Link href={`/teams/${invite.team_post_id}`} onClick={close} className="font-medium hover:underline">
+                    {invite.team?.title ?? 'their team'}
+                  </Link>
+                  {invite.status === 'accepted' || invite.status === 'declined' ? (
+                    <span className="block text-xs text-muted-foreground">
+                      {invite.status === 'accepted' ? 'Invitation accepted' : 'Invitation declined'}
+                    </span>
+                  ) : (
+                    <div className="mt-2 flex gap-2">
+                      {[true, false].map(accept => (
+                        <Button key={String(accept)} type="button" size="sm" variant={accept ? 'default' : 'outline'}
+                          disabled={busy !== null}
+                          onClick={() => void run(invite.team_post_id, async () => {
+                            const { error } = await supabase.rpc('respond_to_team_invitation', {
+                              target_team: invite.team_post_id, accept_invitation: accept,
+                            });
+                            if (error) throw new Error(error.message);
+                          })}>
+                          {accept ? 'Accept' : 'Decline'}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </section>
           )}
@@ -267,7 +287,7 @@ export function NotificationsBell() {
                 return (
                   <Link
                     key={e.id}
-                    href={e.kind === 'applied' ? '/dashboard' : `/teams/${e.postId}`}
+                    href={e.kind === 'applied' ? `/teams/${e.postId}/applications#application-${e.id}` : `/teams/${e.postId}`}
                     onClick={close}
                     className="flex items-center gap-3 px-4 py-2 hover:bg-secondary/60"
                   >

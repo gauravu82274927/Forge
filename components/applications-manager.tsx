@@ -52,6 +52,17 @@ export function ApplicationsManager() {
     void load();
   }, [user, load]);
 
+  useEffect(() => {
+    if (loading || !apps.length) return;
+    const scrollToApplication = () => {
+      const anchor = window.location.hash.slice(1);
+      if (anchor.startsWith('application-')) document.getElementById(anchor)?.scrollIntoView({ block: 'center' });
+    };
+    scrollToApplication();
+    window.addEventListener('hashchange', scrollToApplication);
+    return () => window.removeEventListener('hashchange', scrollToApplication);
+  }, [loading, apps.length]);
+
   const doAccept = async (appId: string) => {
     setBusy(appId);
     setError(null);
@@ -170,7 +181,7 @@ export function ApplicationsManager() {
           </div>
         ) : (
           apps.map((app) => (
-            <div key={app.id} className="rounded-xl border border-border bg-card p-5">
+            <div key={app.id} id={`application-${app.id}`} className="target:ring-2 target:ring-primary rounded-xl border border-border bg-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <UserAvatar
