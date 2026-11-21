@@ -4,11 +4,80 @@ import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { acceptFriendRequest, fetchMyFriendships, sendFriendRequest } from '@/lib/data';
+import type { Friendship } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
 type Person = { id: string; display_name: string };
 type Activity = { friend_count: number; friends: Person[] | null; hackathon_count: number; project_count: number };
 type Review = { reviewer_id: string; reviewer: { display_name: string } | null; body: string };
+
+function FriendList({ friends, userId }: { friends: Person[]; userId?: string }) {
+  const [connections, setConnections] = useState<Friendship[]>();
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [revision, refresh] = useState(0);
+
+  useEffect(() => {
+    if (!userId || !friends.length) return;
+    let active = true;
+    void fetchMyFriendships().then(items => {
+      if (active) setConnections(items);
+    }).catch(() => {
+      if (active) setNotice('Could not load friend actions.');
+    });
+    return () => { active = false; };
+  }, [friends, userId, revision]);
+
+  async function connect(person: Person, incoming?: Friendship) {
+    setBusy(true);
+    setNotice('');
+    try {
+      if (incoming) await acceptFriendRequest(incoming.id);
+      else await sendFriendRequest(person.id);
+      setNotice(incoming ? 'Friend request accepted.' : 'Friend request sent.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not update this friendship.');
+    } finally {
+      setConnections(undefined);
+      refresh(value => value + 1);
+      setBusy(false);
+    }
+  }
+
+  if (!friends.length) return <p className="mt-3 text-sm text-muted-foreground">No friends yet.</p>;
+
+  return (
+    <>
+      <ul className="mt-3 max-h-60 divide-y overflow-y-auto" aria-label="Friends"
+        tabIndex={friends.length > 5 ? 0 : undefined}>
+        {friends.map(person => {
+          const connection = connections?.find(item =>
+            item.requester_id === person.id || item.addressee_id === person.id);
+          const incoming = connection?.status === 'pending' && connection.addressee_id === userId
+            ? connection : undefined;
+          return (
+            <li key={person.id} className="flex h-12 items-center justify-between gap-2 pr-2">
+              <Link href={'/u/' + person.id} className="min-w-0 truncate text-sm underline underline-offset-4"
+                title={person.display_name}>{person.display_name}</Link>
+              {person.id === userId ? <span className="text-xs text-muted-foreground">You</span>
+                : connection?.status === 'accepted' ? <span className="text-xs text-muted-foreground">Friends</span>
+                : connection && !incoming ? <span className="text-xs text-muted-foreground">Request sent</span>
+                : userId && connections && (
+                  <Button type="button" variant="outline" size="sm" className="shrink-0" disabled={busy}
+                    aria-label={(incoming ? 'Accept request from ' : 'Add friend ') + person.display_name}
+                    onClick={() => void connect(person, incoming)}>
+                    {incoming ? 'Accept request' : 'Add friend'}
+                  </Button>
+                )}
+            </li>
+          );
+        })}
+      </ul>
+      {notice && <p role="status" className="mt-2 text-sm text-muted-foreground">{notice}</p>}
+    </>
+  );
+}
 
 export function ProfileActivity({ id, userId }: { id: string; userId?: string }) {
   const [activity, setActivity] = useState<Activity>();
@@ -96,12 +165,7 @@ export function ProfileActivity({ id, userId }: { id: string; userId?: string })
           {activity.friends !== null && (
             <details className="border-t pt-4">
               <summary className="cursor-pointer font-medium">Friends</summary>
-              <ul className="mt-3 flex flex-wrap gap-3">
-                {activity.friends.map(person => (
-                  <li key={person.id}><Link href={'/u/' + person.id} className="text-sm underline underline-offset-4">{person.display_name}</Link></li>
-                ))}
-                {activity.friends.length === 0 && <li className="text-sm text-muted-foreground">No friends yet.</li>}
-              </ul>
+              <FriendList friends={activity.friends} userId={userId} />
             </details>
           )}
         </>
