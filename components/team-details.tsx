@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { MatchmakingPanel } from '@/components/matchmaking-panel';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -380,6 +381,8 @@ export function TeamDetails() {
           </Button>
         </div>
       )}
+
+      {isOwner && <MatchmakingPanel teamId={post.id} revision={`${post.status}:${accepted}:${post.updated_at}`} />}
 
       {/* Apply dialog */}
       <Dialog open={applyOpen} onOpenChange={setApplyOpen}>

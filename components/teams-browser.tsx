@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { MatchmakingPanel } from '@/components/matchmaking-panel';
 import {
   CalendarClock,
   Clock,
@@ -103,6 +104,8 @@ export function TeamsBrowser() {
           projects. Filter by what you know and the time you have.
         </p>
       </div>
+
+      <MatchmakingPanel />
 
       {/* Search + sort */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { MatchmakingPanel } from '@/components/matchmaking-panel';
 import {
   FileText,
   Inbox,
@@ -190,6 +191,8 @@ export function Dashboard() {
           {error}
         </p>
       )}
+
+      <MatchmakingPanel />
 
       <Tabs defaultValue="listings" className="mt-8">
         <TabsList className="w-full justify-start sm:w-auto">
