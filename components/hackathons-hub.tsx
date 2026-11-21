@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { eventFields, type EventField } from '@/lib/hackathon-event-fields';
 import { useEffect, useState, type FormEvent } from 'react';
 import { CalendarDays, ExternalLink, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ type Event = {
   event_name: string;
   event_url: string;
   event_summary?: string | null;
+  event_metadata?: Partial<Record<EventField, string>> | null;
 };
 
 const featuredEvent = {
@@ -130,8 +132,12 @@ export function HackathonsHub() {
       link.value = preview.eventUrl;
       (form.elements.namedItem('event_name') as HTMLInputElement).value = preview.title;
       (form.elements.namedItem('event_summary') as HTMLTextAreaElement).value = preview.summary;
-      (form.elements.namedItem('source') as HTMLSelectElement).value = 'Devfolio';
-      setNotice('Review the imported details before publishing.');
+      (form.elements.namedItem('source') as HTMLSelectElement).value = preview.source;
+      for (const [field] of eventFields) {
+        const input = form.elements.namedItem(field) as HTMLInputElement | HTMLTextAreaElement;
+        if (preview.metadata?.[field]) input.value = preview.metadata[field];
+      }
+      setNotice('Review the imported details and fill in any missing fields before publishing.');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Could not import event details.');
     } finally {
@@ -148,7 +154,9 @@ export function HackathonsHub() {
     setNotice('');
     try {
       const url = eventUrl(value('event_url'));
+      const metadata = Object.fromEntries(eventFields.map(([field]) => [field, value(field)]).filter(([, fieldValue]) => fieldValue));
       const record = {
+        ...(Object.keys(metadata).length ? { event_metadata: metadata } : {}),
         event_name: value('event_name'),
         event_url: url,
         source: value('source'),
@@ -218,6 +226,14 @@ export function HackathonsHub() {
           <label className="grid gap-1.5 text-sm sm:col-span-2">Event overview (optional)
             <Textarea name="event_summary" maxLength={500} rows={2} defaultValue={formEvent?.event_summary ?? ''} />
           </label>
+          {eventFields.map(([field, label, limit]) => (
+            <label key={field} className={field === 'event_details' ? 'grid gap-1.5 text-sm sm:col-span-2' : 'grid gap-1.5 text-sm'}>
+              {label} (optional)
+              {field === 'event_details'
+                ? <Textarea name={field} maxLength={limit} rows={5} defaultValue={formEvent?.event_metadata?.[field] ?? ''} />
+                : <Input name={field} maxLength={limit} defaultValue={formEvent?.event_metadata?.[field] ?? ''} />}
+            </label>
+          ))}
           <label className="grid gap-1.5 text-sm">Event platform
             <select name="source" className="h-10 rounded-md border bg-background px-3"
               defaultValue={formEvent ? sourceFromUrl(formEvent.event_url) : ''} required>
@@ -278,9 +294,18 @@ export function HackathonsHub() {
               )}
               {active.event_url !== featuredEvent.event_url && (() => {
                 const summary = participants.find(listing => listing.event_summary)?.event_summary;
-                return summary ? <section className="rounded-xl border bg-card p-5">
+                const metadata = Object.fromEntries(eventFields.map(([field]) => [
+                  field, participants.find(listing => typeof listing.event_metadata?.[field] === 'string' && listing.event_metadata[field])?.event_metadata?.[field],
+                ]));
+                return (summary || Object.values(metadata).some(Boolean)) ? <section className="rounded-xl border bg-card p-5">
                   <h3 className="font-semibold">About the event</h3>
-                  <p className="mt-2 break-words text-sm text-muted-foreground">{summary}</p>
+                  {summary && <p className="mt-2 break-words text-sm text-muted-foreground">{summary}</p>}
+                  {metadata.event_details && <p className="mt-3 whitespace-pre-wrap break-words text-sm">{metadata.event_details}</p>}
+                  <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                    {eventFields.filter(([field]) => field !== 'event_details' && metadata[field]).map(([field, label]) => (
+                      <div key={field}><dt className="text-muted-foreground">{label}</dt><dd className="break-words">{metadata[field]}</dd></div>
+                    ))}
+                  </dl>
                 </section> : null;
               })()}
               <h3 className="text-lg font-semibold">People and teams</h3>
