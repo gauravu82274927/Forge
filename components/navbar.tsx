@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 const links = [
   { href: '/teams', label: 'Discover Teams' },
+  { href: '/hackathons', label: 'Hackathons' },
   { href: '/#how-it-works', label: 'How It Works' },
 ];
 
@@ -31,6 +32,7 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-1 sm:gap-3">
+          <Link href="/hackathons" className="text-xs font-medium md:hidden">Hackathons</Link>
           <SearchDialog />
           <MessagesLink variant="icon" />
           <NotificationsBell />

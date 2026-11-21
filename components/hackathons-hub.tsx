@@ -1,0 +1,217 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useState, type FormEvent } from 'react';
+import { CalendarDays, ExternalLink, Plus, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+
+const statuses = {
+  recruiting: 'Recruiting teammates',
+  looking: 'Looking for a team',
+  participating: 'Participating',
+};
+
+type Listing = {
+  id: string;
+  owner_id: string;
+  event_name: string;
+  event_url: string;
+  team_url: string | null;
+  application_url: string | null;
+  status: keyof typeof statuses;
+  details: string;
+  owner: { display_name: string } | null;
+};
+
+function publicUrl(value: string) {
+  const url = new URL(value);
+  if (url.protocol !== 'https:' || url.username || url.password || url.port) {
+    throw new Error('Use a public HTTPS link without credentials or a custom port.');
+  }
+  return url;
+}
+
+function eventUrl(value: string) {
+  const url = publicUrl(value);
+  for (const key of Array.from(url.searchParams.keys())) {
+    if (/^(utm_|fbclid$|gclid$)/i.test(key)) url.searchParams.delete(key);
+  }
+  url.searchParams.sort();
+  url.hash = '';
+  url.hostname = url.hostname.replace(/^www\./, '');
+  return url.href.replace(/\/(?=\?|$)/, match => url.pathname === '/' ? match : '');
+}
+
+function External({ url, label }: { url: string; label: string }) {
+  if (!url.startsWith('https://')) return null;
+  return <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm underline underline-offset-4">{label}<ExternalLink size={13} aria-hidden /></a>;
+}
+
+export function HackathonsHub() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [selected, setSelected] = useState('');
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [busy, setBusy] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [formEvent, setFormEvent] = useState<Listing | null>(null);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+
+  async function refresh() {
+    const { data, error } = await supabase.from('hackathon_listings')
+      .select('id,owner_id,event_name,event_url,team_url,application_url,status,details,owner:profiles(display_name)')
+      .order('created_at', { ascending: false });
+    setLoading(false);
+    if (error) {
+      setError('Could not load hackathon listings. Please try refreshing.');
+      return;
+    }
+    setListings((data ?? []) as unknown as Listing[]);
+  }
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null);
+    });
+    void refresh();
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const events = Array.from(new Map(listings.map(listing => [listing.event_url, listing])).values());
+  const filtered = events.filter(event => event.event_name.toLowerCase().includes(query.trim().toLowerCase()));
+  const active = filtered.find(event => event.event_url === selected) ?? filtered[0];
+  const participants = listings.filter(listing => listing.event_url === active?.event_url);
+
+  async function publish(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    const value = (key: string) => String(fields.get(key) ?? '').trim();
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const url = eventUrl(value('event_url'));
+      const record = {
+        event_name: value('event_name'),
+        event_url: url,
+        status: value('status'),
+        details: value('details'),
+        team_url: value('team_url') ? publicUrl(value('team_url')).href : null,
+        application_url: value('application_url') ? publicUrl(value('application_url')).href : null,
+      };
+      const { error } = await supabase.from('hackathon_listings').insert(record);
+      if (error) throw new Error(error.code === '23505' ? 'You already have a listing for this hackathon.' : 'Could not publish your listing. Check your sign-in and try again.');
+      setShowForm(false);
+      setQuery('');
+      setSelected(url);
+      setNotice('Listing published.');
+      await refresh();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not publish your listing.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const { error } = await supabase.from('hackathon_listings').delete().eq('id', id);
+      if (error) setError('Could not remove your listing.');
+      else {
+        setNotice('Listing removed.');
+        await refresh();
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+      <section className="flex flex-wrap items-end justify-between gap-6 border-b pb-8">
+        <div>
+          <CalendarDays className="mb-4 text-primary" aria-hidden />
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Hackathons</h1>
+          <p className="mt-3 max-w-xl text-muted-foreground">Find people building for the same event, join a team, or post the roles you need.</p>
+        </div>
+        {userId
+          ? <Button onClick={() => { setFormEvent(null); setShowForm(!showForm); setError(''); }}><Plus className="mr-2 h-4 w-4" />{showForm ? 'Close form' : 'Post a listing'}</Button>
+          : <Button asChild><Link href="/login">Sign in to post</Link></Button>}
+      </section>
+
+      {!isSupabaseConfigured && <p className="my-4 text-muted-foreground">Connect Supabase to load and publish listings.</p>}
+      {error && <p role="alert" className="my-4 text-destructive">{error}</p>}
+      {notice && <p role="status" className="my-4 text-sm">{notice}</p>}
+      {showForm && userId && (
+        <form key={formEvent?.event_url ?? 'new'} onSubmit={publish} className="my-8 grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2">
+          <h2 className="text-lg font-semibold sm:col-span-2">Post a hackathon listing</h2>
+          <label className="grid gap-1.5 text-sm">Hackathon name<Input name="event_name" required minLength={2} maxLength={100} defaultValue={formEvent?.event_name} /></label>
+          <label className="grid gap-1.5 text-sm">Official event link<Input name="event_url" required type="url" maxLength={1500} defaultValue={formEvent?.event_url} placeholder="https://…" /></label>
+          <label className="grid gap-1.5 text-sm">Public team link (optional)<Input name="team_url" type="url" maxLength={1500} placeholder="https://…" /></label>
+          <label className="grid gap-1.5 text-sm">Public application link (optional)<Input name="application_url" type="url" maxLength={1500} placeholder="https://…" /></label>
+          <label className="grid gap-1.5 text-sm">Your status<select name="status" className="h-10 rounded-md border bg-background px-3">
+            {Object.entries(statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select></label>
+          <label className="grid gap-1.5 text-sm sm:col-span-2">Roles, skills, or what you plan to build<Textarea name="details" maxLength={500} rows={3} /></label>
+          <p className="text-sm text-muted-foreground sm:col-span-2">Use the same official event link to appear with other participants. Post only links you want to share publicly.</p>
+          <div><Button type="submit" disabled={busy}>{busy ? 'Publishing…' : 'Publish listing'}</Button></div>
+        </form>
+      )}
+
+      <div className="mt-8 grid gap-8 md:grid-cols-[270px_minmax(0,1fr)]">
+        <aside className="space-y-4">
+          <label className="block text-sm font-semibold" htmlFor="event-search">Find a hackathon</label>
+          <Input id="event-search" placeholder="Search by name" value={query} onChange={event => setQuery(event.target.value)} />
+          <ul className="space-y-2">
+            {filtered.map(event => (
+              <li key={event.event_url}>
+                <button type="button" aria-pressed={event.event_url === active?.event_url} onClick={() => setSelected(event.event_url)}
+                  className="w-full rounded-lg border px-4 py-3 text-left text-sm font-medium hover:bg-accent aria-pressed:bg-accent">
+                  {event.event_name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
+        <section className="min-w-0 space-y-4">
+          {loading && <p role="status">Loading hackathons…</p>}
+          {!loading && !active && !error && <p className="rounded-xl border p-6 text-muted-foreground">{query ? 'No hackathons match your search.' : 'No hackathon listings yet. Post one to start the conversation.'}</p>}
+          {active && (
+            <>
+              <div className="rounded-xl border bg-muted/40 p-5 sm:p-7">
+                <h2 className="break-words text-2xl font-bold">{active.event_name}</h2>
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Users size={16} aria-hidden />{participants.length} on Forge</span>
+                  <External url={active.event_url} label="Official event page" />
+                  {userId && <Button size="sm" variant="outline" onClick={() => { setFormEvent(active); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Post for this event</Button>}
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold">People and teams</h3>
+              {participants.map(listing => (
+                <article key={listing.id} className="rounded-xl border bg-card p-5">
+                  <p className="mb-2 text-sm font-medium text-muted-foreground">{statuses[listing.status]}</p>
+                  <Link className="font-semibold hover:underline" href={'/u/' + listing.owner_id}>{listing.owner?.display_name || 'Forge builder'}</Link>
+                  {listing.details && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{listing.details}</p>}
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    {listing.team_url && <External url={listing.team_url} label="Team page" />}
+                    {listing.application_url && <External url={listing.application_url} label="Application page" />}
+                    {listing.owner_id === userId && <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void remove(listing.id)}>Remove listing</Button>}
+                  </div>
+                </article>
+              ))}
+            </>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
