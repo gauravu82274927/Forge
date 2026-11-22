@@ -77,7 +77,30 @@ function External({ url, label }: { url: string; label: string }) {
   return <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm underline underline-offset-4">{label}<ExternalLink size={13} aria-hidden /></a>;
 }
 
-function EventDescription({ summary, details }: { summary?: string | null; details?: string }) {
+function LinkedText({ text }: { text: string }) {
+  return <>{text.split(/(\b(?:https?:\/\/|www\.)[^\s<>"']+)/gi).map((part, index) => {
+    if (index % 2 === 0) return part;
+    const label = part.replace(/[.,;:!?]+$/, '');
+    try {
+      const url = new URL(/^www\./i.test(label) ? 'https://' + label : label);
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return part;
+      return <span key={index}>
+        <a href={url.href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+          {label}
+        </a>{part.slice(label.length)}
+      </span>;
+    } catch {
+      return part;
+    }
+  })}</>;
+}
+
+function EventDescription({ title, summary, details }: { title: string; summary?: string | null; details?: string }) {
+  const normalize = (line: string) => line.trim().toLowerCase();
+  const paragraphs = details?.split(/\r?\n/).map(line => line.trim()).filter(line =>
+    line && !/^(?:[-*_]\s*){3,}$/.test(line) &&
+    normalize(line) !== normalize(title) && normalize(line) !== normalize(summary ?? '')
+  ) ?? [];
   const id = useId();
   const content = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -98,10 +121,14 @@ function EventDescription({ summary, details }: { summary?: string | null; detai
 
   return (
     <>
-      <div id={id} className={expanded ? 'mt-2' : 'mt-2 max-h-[12.5rem] overflow-hidden'}>
-        <div ref={content} className="break-words text-sm leading-5">
-          {summary && <p className="text-muted-foreground">{summary}</p>}
-          {details && <p className="whitespace-pre-wrap">{details}</p>}
+      <div id={id} className={expanded ? 'mt-3' : 'mt-3 max-h-[15rem] overflow-hidden'}>
+        <div ref={content} className="break-words text-sm leading-6">
+          {summary && <p className="font-medium"><LinkedText text={summary} /></p>}
+          {paragraphs.length > 0 && (
+            <div className="mt-2 space-y-2 text-muted-foreground">
+              {paragraphs.map((paragraph, index) => <p key={index}><LinkedText text={paragraph} /></p>)}
+            </div>
+          )}
         </div>
       </div>
       {overflows && (
@@ -169,12 +196,10 @@ export function HackathonsHub() {
         link.value = url.origin + '/';
         const name = form.elements.namedItem('event_name') as HTMLInputElement;
         if (!name.value.trim()) {
-          name.value = devpostEvent[1] === 'buildyourownwebsite'
-            ? 'Build Your Own Website'
-            : devpostEvent[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ').slice(0, 100);
+          name.value = devpostEvent[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ').slice(0, 100);
         }
         (form.elements.namedItem('source') as HTMLSelectElement).value = 'Devpost';
-        setNotice('Devpost link ready. Check the event name and enter the details you want to share.');
+        setNotice('Devpost link and platform filled in. The name is suggested from the URL. Enter event details manually.');
         return;
       }
       const response = await fetch('/api/hackathon-preview?' + new URLSearchParams({ url: originalUrl }));
@@ -351,12 +376,16 @@ export function HackathonsHub() {
                 ]));
                 return (summary || Object.values(metadata).some(Boolean)) ? <section className="rounded-xl border bg-card p-5">
                   <h3 className="font-semibold">About the event</h3>
-                  <EventDescription key={active.event_url} summary={summary} details={metadata.event_details} />
-                  <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  {eventFields.some(([field]) => field !== 'event_details' && metadata[field]) && (
+                  <dl className="mt-4 grid gap-x-6 gap-y-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-2">
                     {eventFields.filter(([field]) => field !== 'event_details' && metadata[field]).map(([field, label]) => (
-                      <div key={field}><dt className="text-muted-foreground">{label}</dt><dd className="break-words">{metadata[field]}</dd></div>
+                      <div key={field}><dt className="text-muted-foreground">{label}</dt><dd className="mt-0.5 break-words font-medium">{metadata[field]}</dd></div>
                     ))}
                   </dl>
+                  )}
+                  {(summary || metadata.event_details) && (
+                    <EventDescription key={active.event_url} title={active.event_name} summary={summary} details={metadata.event_details} />
+                  )}
                 </section> : null;
               })()}
               <h3 className="text-lg font-semibold">People and teams</h3>
@@ -365,7 +394,7 @@ export function HackathonsHub() {
                 <article key={listing.id} className="rounded-xl border bg-card p-5">
                   <p className="mb-2 text-sm font-medium text-muted-foreground">{statuses[listing.status]} · {listing.source ?? sourceFromUrl(listing.event_url)}</p>
                   <Link className="font-semibold hover:underline" href={'/u/' + listing.owner_id}>{listing.owner?.display_name || 'Forge builder'}</Link>
-                  {listing.details && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{listing.details}</p>}
+                  {listing.details && <p className="mt-2 whitespace-pre-wrap break-words text-sm"><LinkedText text={listing.details} /></p>}
                   <div className="mt-3 flex flex-wrap items-center gap-4">
                     {listing.team_url && <External url={listing.team_url} label="Team page" />}
                     {listing.application_url && <External url={listing.application_url} label="Application page" />}
