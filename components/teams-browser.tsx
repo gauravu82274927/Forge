@@ -21,8 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CategoryBadge, EmptyState, SkillOverflow } from '@/components/forge-badges';
-import { Badge } from '@/components/ui/badge';
+import { CategoryBadge, EmptyState, SkillOverflow, StatusBadge } from '@/components/forge-badges';
 import { fetchTeamPosts, type TeamPostQuery } from '@/lib/data';
 import {
   CATEGORIES,
@@ -38,7 +37,7 @@ const SORTS = [
   { value: 'positions', label: 'Most open positions' },
 ];
 
-export function TeamsBrowser() {
+export function TeamsBrowser({ showAll = false }: { showAll?: boolean }) {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   const [category, setCategory] = useState('');
@@ -57,12 +56,14 @@ export function TeamsBrowser() {
   const query = useMemo<TeamPostQuery>(
     () => ({
       search: debounced,
+      status: showAll ? 'all' : 'open',
+      excludeDemo: true,
       category: category || undefined,
       experience: experience || undefined,
       commitment: commitment || undefined,
       sort: sort as TeamPostQuery['sort'],
     }),
-    [debounced, category, experience, commitment, sort]
+    [debounced, category, experience, commitment, sort, showAll]
   );
 
   useEffect(() => {
@@ -100,7 +101,7 @@ export function TeamsBrowser() {
           Find your next team.
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Browse open listings from students and developers building real
+          Browse {showAll ? 'all' : 'open'} listings from students and developers building real
           projects. Filter by what you know and the time you have.
         </p>
       </div>
@@ -235,11 +236,7 @@ function TeamCard({ post, index }: { post: TeamPost; index: number }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <CategoryBadge category={post.category} />
-          {post.is_demo && (
-            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-              Demo
-            </Badge>
-          )}
+          <StatusBadge status={post.status} />
         </div>
         <span className="shrink-0 text-xs font-medium text-muted-foreground">
           {post.accepted_count ?? 0}/{post.open_positions} filled

@@ -7,6 +7,6 @@ export const metadata: Metadata = {
     'Browse open team listings for hackathons, side projects, and open-source work.',
 };
 
-export default function TeamsPage() {
-  return <TeamsBrowser />;
+export default function TeamsPage({ searchParams }: { searchParams: { view?: string } }) {
+  return <TeamsBrowser showAll={searchParams.view === 'all'} />;
 }

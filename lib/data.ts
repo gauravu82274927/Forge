@@ -19,6 +19,8 @@ export interface TeamPostQuery {
   experience?: string;
   commitment?: string;
   status?: 'open' | 'closed' | 'all';
+  excludeDemo?: boolean;
+  limit?: number;
   sort?: 'newest' | 'deadline' | 'positions';
 }
 
@@ -30,7 +32,8 @@ export async function fetchTeamPosts(query: TeamPostQuery = {}): Promise<TeamPos
     .from('team_posts')
     .select(POST_SELECT);
 
-  req = req.eq('status', query.status ?? 'open');
+  if (query.status !== 'all') req = req.eq('status', query.status ?? 'open');
+  if (query.excludeDemo) req = req.eq('is_demo', false);
 
   if (query.category) req = req.eq('category', query.category);
   if (query.experience) req = req.eq('experience_level', query.experience);
@@ -50,6 +53,7 @@ export async function fetchTeamPosts(query: TeamPostQuery = {}): Promise<TeamPos
     req = req.order('created_at', { ascending: false });
   }
 
+  if (query.limit !== undefined) req = req.limit(query.limit);
   const { data, error } = await req;
   if (error) throw new Error(error.message);
   return attachCounts((data ?? []) as unknown as TeamPost[]);

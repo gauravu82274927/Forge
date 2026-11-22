@@ -10,51 +10,11 @@ import {
   Sparkles,
   TerminalSquare,
   Users,
-  Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ForgeHeroVisual } from '@/components/forge-hero-visual';
-import { CategoryBadge } from '@/components/forge-badges';
-
-const sampleListings = [
-  {
-    title: 'AI-Powered Study Planner',
-    category: 'AI / ML',
-    skills: ['Python', 'React', 'LLM APIs'],
-    roles: ['ML Engineer', 'Frontend'],
-    positions: 2,
-    commitment: '10-15 hrs/week',
-    icon: Sparkles,
-  },
-  {
-    title: 'Open-Source CLI for API Testing',
-    category: 'Open Source',
-    skills: ['Rust', 'CLI design', 'HTTP'],
-    roles: ['Rust Developer', 'Docs'],
-    positions: 2,
-    commitment: '5-10 hrs/week',
-    icon: TerminalSquare,
-  },
-  {
-    title: 'Student Productivity App (SwiftUI)',
-    category: 'Mobile App',
-    skills: ['Swift', 'SwiftUI', 'iOS'],
-    roles: ['iOS Developer', 'Design QA'],
-    positions: 2,
-    commitment: '8-12 hrs/week',
-    icon: Smartphone,
-  },
-  {
-    title: 'Sustainability Footprint Tracker',
-    category: 'Sustainability',
-    skills: ['TypeScript', 'PostgreSQL'],
-    roles: ['Fullstack', 'Data Researcher'],
-    positions: 2,
-    commitment: '6-10 hrs/week',
-    icon: Wrench,
-  },
-];
+import { RecentListings } from '@/components/recent-listings';
 
 const skills = [
   { label: 'Frontend', icon: Layers },
@@ -132,59 +92,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sample listings */}
-      <section className="border-y border-border/70 bg-secondary/40 py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Discover what you can build
-            </h2>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
-              <p className="m-0">
-                Example listings that show what a post looks like.
-              </p>
-              <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                Demo data
-              </Badge>
-            </div>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {sampleListings.map((item) => (
-              <Link
-                key={item.title}
-                href="/teams"
-                className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-1 hover:border-accent/60 hover:shadow-md"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15">
-                  <item.icon className="h-5 w-5 text-foreground/70" />
-                </div>
-                <CategoryBadge category={item.category} />
-                <h3 className="mt-2 font-semibold leading-snug">{item.title}</h3>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {item.skills.slice(0, 3).map((s) => (
-                    <span
-                      key={s}
-                      className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {item.positions} open positions · {item.commitment}
-                </p>
-              </Link>
-            ))}
-          </div>
-          <div className="mt-8">
-            <Button variant="ghost" asChild>
-              <Link href="/teams">
-                Browse all listings <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <RecentListings />
 
       {/* How it works */}
       <section id="how-it-works" className="py-20">
