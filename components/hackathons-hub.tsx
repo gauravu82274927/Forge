@@ -25,11 +25,6 @@ type Event = {
   event_metadata?: Partial<Record<EventField, string>> | null;
 };
 
-const featuredEvent = {
-  event_name: 'Food for Thought 2.0',
-  event_url: 'https://foodforthoughtchallenge.in/',
-};
-
 function sourceFromUrl(value: string): Source {
   try {
     const host = new URL(value).hostname.toLowerCase();
@@ -176,7 +171,7 @@ export function HackathonsHub() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const events = Array.from(new Map<string, Event>([...listings, featuredEvent].map(event => [event.event_url, event])).values());
+  const events = Array.from(new Map<string, Event>(listings.map(event => [event.event_url, event])).values());
   const filtered = events.filter(event => event.event_name.toLowerCase().includes(query.trim().toLowerCase()));
   const active = filtered.find(event => event.event_url === selected) ?? filtered[0];
   const participants = listings.filter(listing => listing.event_url === active?.event_url);
@@ -353,23 +348,11 @@ export function HackathonsHub() {
                 <h2 className="break-words text-2xl font-bold">{active.event_name}</h2>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   <span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Users size={16} aria-hidden />{participants.length} on Forge</span>
-                  <External url={active.event_url} label={active.event_url === featuredEvent.event_url ? "Official details and registration" : "Official event page"} />
+                  <External url={active.event_url} label="Official event page" />
                   {userId && <Button size="sm" variant="outline" onClick={() => { setFormEvent(active); setShowForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Post for this event</Button>}
                 </div>
               </div>
-              {active.event_url === featuredEvent.event_url && (
-                <section className="space-y-4 rounded-xl border bg-card p-5 sm:p-7">
-                  <h3 className="text-lg font-semibold">About the event</h3>
-                  <p className="text-sm text-muted-foreground">Swiggy’s student case study competition asks teams to identify a need on campus and propose a solution for college students in India.</p>
-                  <dl className="grid gap-4 text-sm sm:grid-cols-2">
-                    <div><dt className="text-muted-foreground">Organizer</dt><dd className="font-medium">Swiggy</dd></div>
-                    <div><dt className="text-muted-foreground">Team size</dt><dd className="font-medium">2–4 students from the same college</dd></div>
-                    <div><dt className="text-muted-foreground">Registration closes</dt><dd className="font-medium">25 November 2026</dd></div>
-                    <div><dt className="text-muted-foreground">Submission deadline (tentative)</dt><dd className="font-medium">15 December 2026</dd></div>
-                  </dl>
-                </section>
-              )}
-              {active.event_url !== featuredEvent.event_url && (() => {
+              {(() => {
                 const summary = participants.find(listing => listing.event_summary)?.event_summary;
                 const metadata = Object.fromEntries(eventFields.map(([field]) => [
                   field, participants.find(listing => typeof listing.event_metadata?.[field] === 'string' && listing.event_metadata[field])?.event_metadata?.[field],
