@@ -9,7 +9,8 @@ function plain(text: unknown) {
   return typeof text === 'string' ? text
     .replace(/<\/(?:p|li|h[1-6])>|<br\s*\/?\s*>/gi, '\n')
     .replace(/<[^>]*>/g, '')
-    .replace(/&([a-z]+|#39);/gi, (whole, key: string) => entities[key] ?? whole)
+    .replace(/&([a-z]+|#0*39);/gi, (whole, key: string) =>
+      key.startsWith('#') ? "'" : entities[key.toLowerCase()] ?? whole)
     .replace(/\*\*/g, '')
     .replace(/^#+\s+/gm, '')
     .replace(/[^\S\n]+/g, ' ')
@@ -49,16 +50,29 @@ function devfolio(html: string) {
 }
 
 function unstop(html: string) {
-  const detailSection = html.split(/class="detail-page"[^>]*>/i)[1]?.split(/<h2\b|class="(?:pdng|prize|important)/i)[0];
-  const details = plain(detailSection).slice(0, 3000);
+  const editor = html.match(/<div\b[^>]*class="default-editor"[^>]*>/i);
+  let details = '';
+  if (editor?.index !== undefined) {
+    const start = editor.index + editor[0].length;
+    const content = html.slice(start).replace(/<!--[\s\S]*?-->/g, '');
+    let depth = 1;
+    for (const tag of Array.from(content.matchAll(/<\/?div\b[^>]*>/gi))) {
+      depth += tag[0].startsWith('</') ? -1 : 1;
+      if (depth === 0) {
+        details = plain(content.slice(0, tag.index));
+        break;
+      }
+    }
+  }
+  const overview = details.match(/^About (?:the )?(?:hackathon|event)\s*\n([^\n]+)/im)?.[1];
   return {
     title: plain(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]),
-    summary: details.split('\n').find(line => line.length > 60),
+    summary: overview ?? details.split('\n').find(line => line.length > 60),
     metadata: {
-      event_details: details,
+      event_details: details.length > 3000 && overview ? details.slice(details.indexOf(overview)) : details,
       event_organizer: plain(html.match(/<h2>\s*<a\b[^>]*href="https:\/\/unstop\.com\/c\/[^"]+"[^>]*>([\s\S]*?)<\/a>/i)?.[1]),
       event_team_size: plain(html.match(/Team Size\s*<strong>([\s\S]*?)<\/strong>/i)?.[1]),
-      event_registration_closes: plain(html.match(/Registration Deadline\s*<strong>([\s\S]*?)<\/strong>/i)?.[1]),
+      event_registration_closes: plain(html.match(/Registration Deadline\s*<strong>([\s\S]*?)<\/strong>/i)?.[1]) || details.match(/^Registration Deadline\s*:\s*(.+)$/im)?.[1],
       event_submission_deadline: details.match(/^(?:project )?submission deadline\s*:\s*(.+)$/im)?.[1],
       event_period: details.match(/^(?:event dates|hackathon dates)\s*:\s*(.+)$/im)?.[1],
       event_location: details.match(/^(?:location|venue|mode)\s*:\s*(.+)$/im)?.[1],

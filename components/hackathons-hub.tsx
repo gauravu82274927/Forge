@@ -125,6 +125,20 @@ export function HackathonsHub() {
     setError('');
     setNotice('');
     try {
+      const url = publicUrl(originalUrl);
+      const devpostEvent = url.hostname.match(/^([a-z0-9-]+)\.devpost\.com$/i);
+      if (devpostEvent && !['www', 'info', 'help'].includes(devpostEvent[1])) {
+        link.value = url.origin + '/';
+        const name = form.elements.namedItem('event_name') as HTMLInputElement;
+        if (!name.value.trim()) {
+          name.value = devpostEvent[1] === 'buildyourownwebsite'
+            ? 'Build Your Own Website'
+            : devpostEvent[1].split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ').slice(0, 100);
+        }
+        (form.elements.namedItem('source') as HTMLSelectElement).value = 'Devpost';
+        setNotice('Devpost link ready. Check the event name and enter the details you want to share.');
+        return;
+      }
       const response = await fetch('/api/hackathon-preview?' + new URLSearchParams({ url: originalUrl }));
       const preview = await response.json();
       if (originalUrl !== link.value || !form.isConnected) return;
