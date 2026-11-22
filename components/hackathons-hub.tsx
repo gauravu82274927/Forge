@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { eventFields, type EventField } from '@/lib/hackathon-event-fields';
-import { useEffect, useState, type FormEvent } from 'react';
-import { CalendarDays, ExternalLink, Plus, Users } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { CalendarDays, ChevronDown, ChevronUp, ExternalLink, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,6 +75,44 @@ function eventUrl(value: string) {
 function External({ url, label }: { url: string; label: string }) {
   if (!url.startsWith('https://')) return null;
   return <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm underline underline-offset-4">{label}<ExternalLink size={13} aria-hidden /></a>;
+}
+
+function EventDescription({ summary, details }: { summary?: string | null; details?: string }) {
+  const id = useId();
+  const content = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+
+  useEffect(() => {
+    const element = content.current;
+    if (!element) return;
+    const measure = () => {
+      const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
+      setOverflows(element.getBoundingClientRect().height > lineHeight * 10 + 0.5);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    measure();
+    return () => observer.disconnect();
+  }, [summary, details]);
+
+  return (
+    <>
+      <div id={id} className={expanded ? 'mt-2' : 'mt-2 max-h-[12.5rem] overflow-hidden'}>
+        <div ref={content} className="break-words text-sm leading-5">
+          {summary && <p className="text-muted-foreground">{summary}</p>}
+          {details && <p className="whitespace-pre-wrap">{details}</p>}
+        </div>
+      </div>
+      {overflows && (
+        <Button type="button" variant="ghost" size="sm" className="mt-2"
+          aria-controls={id} aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>
+          {expanded ? 'Show less' : 'Show more'}
+          {expanded ? <ChevronUp className="ml-1 h-4 w-4" aria-hidden /> : <ChevronDown className="ml-1 h-4 w-4" aria-hidden />}
+        </Button>
+      )}
+    </>
+  );
 }
 
 export function HackathonsHub() {
@@ -313,8 +351,7 @@ export function HackathonsHub() {
                 ]));
                 return (summary || Object.values(metadata).some(Boolean)) ? <section className="rounded-xl border bg-card p-5">
                   <h3 className="font-semibold">About the event</h3>
-                  {summary && <p className="mt-2 break-words text-sm text-muted-foreground">{summary}</p>}
-                  {metadata.event_details && <p className="mt-3 whitespace-pre-wrap break-words text-sm">{metadata.event_details}</p>}
+                  <EventDescription key={active.event_url} summary={summary} details={metadata.event_details} />
                   <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                     {eventFields.filter(([field]) => field !== 'event_details' && metadata[field]).map(([field, label]) => (
                       <div key={field}><dt className="text-muted-foreground">{label}</dt><dd className="break-words">{metadata[field]}</dd></div>
