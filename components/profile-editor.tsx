@@ -192,7 +192,7 @@ export function ProfileEditor() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <div className="flex items-center gap-4">
+      <div className="forge-page-heading flex flex-wrap items-center gap-4">
         <Avatar className="h-20 w-20">
           <AvatarImage src={profile.avatar_url ?? undefined} alt="Your profile picture" />
           <AvatarFallback className="bg-accent text-xl font-bold text-accent-foreground">
@@ -200,7 +200,7 @@ export function ProfileEditor() {
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Your profile</h1>
+          <p className="forge-eyebrow mb-3">Your builder identity</p><h1 className="text-3xl font-extrabold tracking-tight">Your profile</h1>
           <p className="text-sm text-muted-foreground">
             Team owners see this when you apply. Your email stays private.
           </p>

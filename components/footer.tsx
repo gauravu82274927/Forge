@@ -31,19 +31,19 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/70 bg-secondary/40">
+    <footer className="border-t border-border/70 bg-background">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <ForgeWordmark />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Find your people. Build something real. Forge helps students
+              Less solo. More shipped. Forge helps students
               discover teams and turn ideas into projects.
             </p>
           </div>
           {columns.map((col) => (
             <div key={col.heading}>
-              <h3 className="text-sm font-semibold">{col.heading}</h3>
+              <h3 className="forge-eyebrow">{col.heading}</h3>
               <ul className="mt-3 space-y-2">
                 {col.links.map((link) => (
                   <li key={link.href}>
@@ -61,7 +61,7 @@ export function Footer() {
         </div>
         <div className="mt-10 flex flex-col gap-2 border-t border-border/70 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Forge. A student collaboration platform.</p>
-          <p>Built for students, by students.</p>
+          <p>Made for the next generation of builders.</p>
         </div>
       </div>
     </footer>

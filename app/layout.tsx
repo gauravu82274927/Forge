@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ProfileBanner } from '@/components/profile-banner';
 import { Navbar } from '@/components/navbar';
+import { WorkspaceStrip } from '@/components/workspace-strip';
 import { Footer } from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -27,12 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <div className="flex min-h-screen flex-col">
+              <a href="#main-content" className="sr-only focus:not-sr-only focus:p-3">Skip to content</a>
               <Navbar />
               <ProfileBanner />
-              <main className="flex-1">{children}</main>
+              <WorkspaceStrip />
+              <main id="main-content" className="flex-1">{children}</main>
               <Footer />
             </div>
             <Toaster />

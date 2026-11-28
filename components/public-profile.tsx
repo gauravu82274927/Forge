@@ -180,7 +180,7 @@ export function PublicProfile({ id }: { id: string }) {
         </p>
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+      <div className="forge-page-heading">
         <div className="flex flex-wrap items-center gap-4">
           <UserAvatar
             id={profile.id}

@@ -21,9 +21,10 @@ export function RecentListings() {
   }, []);
 
   return (
-    <section className="border-y border-border/70 bg-secondary/40 py-20">
+    <section className="border-b border-border/70 py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2 className="text-3xl font-bold tracking-tight">Recent team listings</h2>
+        <p className="forge-eyebrow mb-4">01 / Find your next project</p>
+        <h2 className="text-3xl font-bold tracking-tight">Ideas looking for their people.</h2>
         <p className="mt-3 text-muted-foreground">See what student builders are working on.</p>
         {failed ? <p role="status" className="mt-6 text-sm">Couldn’t load recent listings. Try browsing all listings.</p>
           : posts === null ? <p role="status" className="mt-6 text-sm text-muted-foreground">Loading listings…</p>
@@ -32,7 +33,7 @@ export function RecentListings() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {posts.map(post => (
                 <Link key={post.id} href={`/teams/${post.id}`}
-                  className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-accent/60">
+                  className="forge-panel group p-5 transition-all hover:-translate-y-1 hover:border-accent/60">
                   <div className="flex flex-wrap gap-2">
                     <CategoryBadge category={post.category} />
                     <StatusBadge status={post.status} />

@@ -172,9 +172,9 @@ export function Dashboard() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="forge-page-heading flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Dashboard</h1>
+          <p className="forge-eyebrow mb-3">Workspace / Overview</p><h1 className="text-3xl font-extrabold tracking-tight">Your build space.</h1>
           <p className="mt-1 text-muted-foreground">
             Your listings and applications at a glance.
           </p>

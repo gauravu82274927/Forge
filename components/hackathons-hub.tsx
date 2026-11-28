@@ -269,10 +269,10 @@ export function HackathonsHub() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
-      <section className="flex flex-wrap items-end justify-between gap-6 border-b pb-8">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+      <section className="forge-page-heading flex flex-wrap items-end justify-between gap-6">
         <div>
-          <CalendarDays className="mb-4 text-primary" aria-hidden />
+          <p className="forge-eyebrow mb-4">Explore / Hackathon hub</p>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Hackathons</h1>
           <p className="mt-3 max-w-xl text-muted-foreground">Find people building for the same event, join a team, or post the roles you need.</p>
         </div>
@@ -389,6 +389,6 @@ export function HackathonsHub() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }

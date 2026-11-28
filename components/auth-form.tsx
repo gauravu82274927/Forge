@@ -104,8 +104,9 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   }
 
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
+    <div className="forge-auth mx-auto flex max-w-md flex-col px-6 py-10 sm:px-8">
       <div className="text-center">
+        <p className="forge-eyebrow mb-5">&gt; Your builder workspace</p>
         <h1 className="text-3xl font-extrabold tracking-tight">
           {mode === 'login' ? 'Welcome back' : 'Create your account'}
         </h1>

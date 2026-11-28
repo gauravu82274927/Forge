@@ -181,7 +181,7 @@ export function Chat() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-3 sm:px-6 sm:py-8">
-      <h1 className={`text-3xl font-extrabold tracking-tight ${selected ? 'hidden md:block' : ''}`}>Messages</h1>
+      <h1 className={`text-3xl font-extrabold tracking-tight ${selected ? 'hidden md:block' : ''}`}>Your conversations.</h1>
 
       {error && (
         <p role="alert" className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
@@ -198,7 +198,7 @@ export function Chat() {
           />
         </div>
       ) : (
-        <div className={`grid grid-cols-[minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-card md:mt-6 md:grid-cols-[17rem_minmax(0,1fr)] ${selected ? 'mt-0' : 'mt-6'}`}>
+        <div className={`forge-panel grid grid-cols-[minmax(0,1fr)] overflow-hidden md:mt-6 md:grid-cols-[17rem_minmax(0,1fr)] ${selected ? 'mt-0' : 'mt-6'}`}>
           {/* Friend list */}
           <ul className={`max-h-[calc(100dvh-14rem)] divide-y overflow-y-auto md:max-h-[70vh] border-border md:border-r ${selected ? 'hidden md:block' : ''}`}>
             {sorted.map((f) => {

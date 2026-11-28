@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --background: 38 28% 97%;
-  --foreground: 30 10% 8%;
+  --background: 220 20% 97%;
+  --foreground: 225 18% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 30 10% 8%;
+  --card-foreground: 225 18% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 30 10% 8%;
-  --primary: 30 10% 9%;
+  --popover-foreground: 225 18% 10%;
+  --primary: 225 18% 10%;
   --primary-foreground: 0 0% 98%;
-  --secondary: 40 14% 94%;
+  --secondary: 220 14% 93%;
   --secondary-foreground: 30 10% 12%;
-  --muted: 40 14% 94%;
+  --muted: 220 14% 93%;
   --muted-foreground: 30 6% 42%;
   --accent: 76 85% 52%;
   --accent-foreground: 76 90% 10%;
@@ -23,38 +23,38 @@
   --destructive-foreground: 0 0% 98%;
   --success: 150 60% 38%;
   --warning: 35 90% 48%;
-  --border: 40 12% 88%;
-  --input: 40 12% 84%;
+  --border: 220 14% 86%;
+  --input: 220 12% 80%;
   --ring: 76 85% 42%;
   --chart-1: 76 85% 52%;
-  --chart-2: 30 10% 9%;
+  --chart-2: 225 18% 10%;
   --chart-3: 150 60% 38%;
   --chart-4: 35 90% 48%;
   --chart-5: 200 70% 40%;
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 }
 
 .dark {
-  --background: 24 14% 6%;
+  --background: 225 18% 5%;
   --foreground: 40 20% 96%;
-  --card: 24 12% 9%;
+  --card: 225 14% 9%;
   --card-foreground: 40 20% 96%;
-  --popover: 24 12% 9%;
+  --popover: 225 14% 9%;
   --popover-foreground: 40 20% 96%;
   --primary: 40 20% 96%;
-  --primary-foreground: 30 10% 9%;
-  --secondary: 30 8% 14%;
+  --primary-foreground: 225 18% 10%;
+  --secondary: 225 12% 13%;
   --secondary-foreground: 40 20% 96%;
-  --muted: 30 8% 14%;
-  --muted-foreground: 40 8% 62%;
+  --muted: 225 12% 13%;
+  --muted-foreground: 220 8% 65%;
   --accent: 76 85% 52%;
   --accent-foreground: 76 90% 10%;
   --ember: 22 92% 58%;
   --ember-foreground: 22 90% 10%;
   --destructive: 0 62% 40%;
   --destructive-foreground: 0 0% 98%;
-  --border: 30 8% 16%;
-  --input: 30 8% 20%;
+  --border: 225 12% 18%;
+  --input: 225 12% 24%;
   --ring: 76 85% 52%;
 }
 
@@ -91,4 +91,31 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Forge / builder workspace */
+@layer base {
+  body { background-image: radial-gradient(ellipse at 80% 0%, hsl(var(--accent) / .035), transparent 45%); }
+  h1, h2, h3 { letter-spacing: -.04em; }
+  button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+  a:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 5px; }
+}
+@layer components {
+  .forge-eyebrow { @apply font-mono text-[11px] uppercase tracking-[.18em] text-muted-foreground; }
+  .forge-panel { @apply rounded-xl border border-border bg-card; box-shadow: inset 0 1px 0 hsl(var(--foreground) / .035), 0 12px 40px -28px #0008; }
+  .forge-page-heading { @apply relative mb-8 overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8; background-image: radial-gradient(ellipse at 100% 0%, hsl(var(--accent) / .12), transparent 60%); }
+  .forge-nav-link { @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground; }
+  .forge-nav-link[aria-current="page"] { @apply bg-secondary text-foreground; box-shadow: inset 0 -2px hsl(var(--accent)); }
+  .forge-auth { @apply my-10 rounded-2xl border border-border bg-card shadow-xl; }
+  .forge-hero { @apply relative overflow-hidden border-b border-border; }
+  .forge-hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(hsl(var(--border) / .35) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / .35) 1px, transparent 1px); background-size: 80px 80px; mask-image: linear-gradient(90deg, transparent, black); }
+  .forge-title { font-size: clamp(3.3rem, 6.8vw, 6rem); font-weight: 650; line-height: .98; letter-spacing: -.075em; }
+  .forge-art { @apply relative w-full; aspect-ratio: 1; min-width: 0; }
+  .forge-art canvas { width: 100%; height: 100%; }
+  .forge-art-label { @apply absolute rounded-md border border-border bg-background/90 px-3 py-2 font-mono text-[10px] text-muted-foreground backdrop-blur; }
+  .forge-step { @apply relative border-t border-border py-7; }
+  .forge-step:hover { border-color: hsl(var(--accent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

@@ -1,267 +1,208 @@
-import Link from 'next/link';
+import Link from "next/link";
 import {
   ArrowRight,
-  Compass,
-  FileText,
-  Hammer,
-  Layers,
-  Palette,
-  Smartphone,
-  Sparkles,
-  TerminalSquare,
+  ArrowUpRight,
+  Code2,
+  GitBranch,
+  Terminal,
   Users,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ForgeHeroVisual } from '@/components/forge-hero-visual';
-import { RecentListings } from '@/components/recent-listings';
-
-const skills = [
-  { label: 'Frontend', icon: Layers },
-  { label: 'Backend', icon: TerminalSquare },
-  { label: 'Design', icon: Palette },
-  { label: 'AI / ML', icon: Sparkles },
-  { label: 'Mobile', icon: Smartphone },
-  { label: 'Product', icon: Compass },
-];
-
+  Zap,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ForgeHeroVisual } from "@/components/forge-hero-visual";
+import { RecentListings } from "@/components/recent-listings";
 const steps = [
   {
-    icon: Compass,
-    title: 'Discover a project',
-    text: 'Browse listings from students building AI tools, apps, open-source libraries, and more. Filter by the skills you have and the time you can give.',
+    icon: Code2,
+    title: "Find your kind of build.",
+    text: "Explore projects by skills, interests, and the time you can give. Find an idea you want to bring to life.",
   },
   {
-    icon: FileText,
-    title: 'Apply to join',
-    text: 'Found a team that fits? Send a short intro with your skills and interests. Owners review every application — no cold DMs, no guessing.',
+    icon: Users,
+    title: "Meet your missing pieces.",
+    text: "Send an introduction or post the roles you need. Connect with people whose strengths complement yours.",
   },
   {
-    icon: Hammer,
-    title: 'Collaborate and build',
-    text: 'Accepted into a team? Start shipping. Commitment and expectations are clear from day one, so everyone knows what they signed up for.',
+    icon: GitBranch,
+    title: "Make the first commit.",
+    text: "Get your team together, align on the work, and turn that side-project idea into something real.",
   },
 ];
-
 export default function Home() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="grid-texture pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black,transparent)]" />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-24 top-10 h-96 w-96 rounded-full bg-ember/15 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-32 top-40 h-80 w-80 rounded-full bg-accent/15 blur-3xl"
-        />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:pt-24">
-          <div>
-            <Badge variant="outline" className="mb-5 border-accent/60 bg-accent/15 text-foreground">
-              <Sparkles className="mr-1 h-3 w-3" />
-              For students who build
-            </Badge>
-            <h1 className="text-balance text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-              Find your people.{' '}
-              <span className="relative inline-block">
-                Build something real.
-                <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-full bg-forge-gradient" />
-              </span>
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Great projects start with the right people. Discover teams, find
-              collaborators who share your interests, and turn your ideas into
-              something real.
+      <section className="forge-hero">
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex items-center justify-between border-b border-border/60 py-5">
+            <p className="forge-eyebrow flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" /> A place
+              for student builders
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/teams">
-                  Find a Team <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/teams/new">Start Building</Link>
-              </Button>
-            </div>
+            <span className="forge-eyebrow hidden sm:block">
+              Ideas → People → Projects
+            </span>
           </div>
-          <div className="flex justify-center lg:justify-end">
+          <div className="grid items-center gap-4 pb-12 pt-12 lg:grid-cols-[1.1fr_1fr] lg:pb-20 lg:pt-16">
+            <div className="relative z-10">
+              <p className="forge-eyebrow mb-6">
+                Good code starts with good company.
+              </p>
+              <h1 className="forge-title">
+                Less solo.
+                <br />
+                More{" "}
+                <span className="text-[hsl(76_70%_32%)] dark:text-accent">
+                  shipped.
+                </span>
+              </h1>
+              <p className="mt-7 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Find your next hackathon team, your project co-builder, or the
+                skill your idea is missing.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button size="lg" asChild>
+                  <Link href="/teams">
+                    Find your team <ArrowUpRight className="ml-3 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/teams/new">
+                    Post a project <span className="ml-3 font-mono">+</span>
+                  </Link>
+                </Button>
+              </div>
+              <div className="mt-8 flex items-center gap-3 font-mono text-[11px] text-muted-foreground">
+                <Terminal size={14} />
+                <span>For the ones who would rather build.</span>
+              </div>
+            </div>
             <ForgeHeroVisual />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/60 py-5 font-mono text-xs text-muted-foreground">
+            <span className="text-foreground">Every stack. One community.</span>
+            {["React", "Python", "Rust", "Figma", "Swift", "PyTorch"].map(
+              (s) => (
+                <span key={s}>{s}</span>
+              ),
+            )}
           </div>
         </div>
       </section>
-
       <RecentListings />
-
-      {/* How it works */}
-      <section id="how-it-works" className="py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight">How Forge works</h2>
-            <p className="mt-3 text-muted-foreground">
-              Three steps between working alone and building with a team.
+      <section
+        id="how-it-works"
+        className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6"
+      >
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.6fr]">
+          <div>
+            <p className="forge-eyebrow mb-5">02 / From idea to first commit</p>
+            <h2 className="text-4xl font-semibold leading-tight">
+              Great things
+              <br />
+              aren’t built alone.
+            </h2>
+            <p className="mt-5 max-w-xs leading-relaxed text-muted-foreground">
+              Your idea deserves more than another abandoned repository.
             </p>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div>
             {steps.map((step, i) => (
-              <div key={step.title} className="relative rounded-xl border border-border bg-card p-6">
-                <span className="absolute right-5 top-4 text-4xl font-black text-border">
-                  {String(i + 1).padStart(2, '0')}
+              <div
+                key={step.title}
+                className="forge-step grid grid-cols-[36px_1fr] gap-4"
+              >
+                <span className="font-mono text-xs text-muted-foreground">
+                  0{i + 1}
                 </span>
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-accent/15">
-                  <step.icon className="h-5 w-5 text-foreground/70" />
+                <div>
+                  <step.icon size={20} className="mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold">{step.title}</h3>
+                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                    {step.text}
+                  </p>
                 </div>
-                <h3 className="mt-4 font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {step.text}
-                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
-
-      {/* Complementary skills */}
-      <section className="border-y border-border/70 bg-secondary/40 py-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              Build with complementary skills
-            </h2>
-            <p className="mt-3 leading-relaxed text-muted-foreground">
-              The best student teams are not five people with the same resume.
-              They are designers and backend developers, ML engineers and
-              product thinkers — people whose strengths fit together. Forge
-              helps you find the piece your team is missing.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {skills.map((s) => (
-                <span
-                  key={s.label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium"
-                >
-                  <s.icon className="h-3.5 w-3.5 text-foreground/60" />
-                  {s.label}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-8">
-            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-              <Users className="h-4 w-4" /> Roles teams often need
-            </div>
-            <ul className="mt-5 space-y-2 text-sm">
-              {[
-                'Frontend developer',
-                'Backend or ML engineer',
-                'Designer',
-                'Product thinker',
-              ].map((role) => (
-                <li
-                  key={role}
-                  className="rounded-lg border border-border bg-background px-3 py-2"
-                >
-                  {role}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 text-xs text-muted-foreground">
-              Different strengths, one project. That is what makes a team work.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* For project creators */}
-      <section className="py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="rounded-2xl border border-border bg-card p-8 sm:p-12">
-            <div className="grid items-center gap-10 lg:grid-cols-2">
-              <div>
-                <Badge variant="outline" className="mb-4">For project creators</Badge>
-                <h2 className="text-3xl font-bold tracking-tight">
-                  Have an idea? Publish a listing.
-                </h2>
-                <p className="mt-3 leading-relaxed text-muted-foreground">
-                  Describe what you are building, the skills you need, and how
-                  much time it takes. Then review applications in one place and
-                  accept the teammates who fit.
-                </p>
-                <ul className="mt-6 space-y-2 text-sm">
-                  {[
-                    'Set open roles, skills, and weekly commitment',
-                    'Review incoming applications with context',
-                    'Accept up to your capacity — positions close automatically',
-                  ].map((point) => (
-                    <li key={point} className="flex items-start gap-2 text-muted-foreground">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <Button className="mt-8" asChild>
-                  <Link href="/teams/new">
-                    Post a listing <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="rounded-xl border border-border bg-background p-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">New application</span>
-                  <Badge variant="outline">Pending</Badge>
-                </div>
-                <p className="mt-3 rounded-lg bg-secondary p-3 text-sm leading-relaxed text-muted-foreground">
-                  &ldquo;Hi! I have been building with React for two years and
-                  would love to help with the study planner frontend. Here is a
-                  scheduling UI I shipped last month…&rdquo;
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <span className="rounded-md bg-[hsl(150_60%_90%)] px-3 py-1.5 text-xs font-semibold text-[hsl(150_60%_24%)]">
-                    Accept
-                  </span>
-                  <span className="rounded-md bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-                    Decline
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="pb-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="relative overflow-hidden rounded-2xl bg-foreground px-8 py-16 text-center text-background sm:px-16">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-40"
-              style={{
-                background:
-                  'radial-gradient(500px circle at 30% 120%, hsl(76 85% 52% / 0.5), transparent 65%), radial-gradient(420px circle at 75% 130%, hsl(22 92% 56% / 0.45), transparent 65%)',
-              }}
+      <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-20 sm:px-6 md:grid-cols-2">
+        <Link
+          href="/hackathons"
+          className="forge-panel group relative overflow-hidden p-8 sm:p-10"
+        >
+          <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full border-[28px] border-accent/10" />
+          <Zap size={24} />
+          <p className="forge-eyebrow mb-4 mt-12">Built for the deadline</p>
+          <h2 className="text-3xl font-semibold">
+            Same event.
+            <br />
+            Your kind of team.
+          </h2>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            Find others entering your hackathon and fill the roles you need
+            before the clock starts.
+          </p>
+          <span className="mt-8 flex items-center gap-3 text-sm font-medium">
+            Explore hackathons{" "}
+            <ArrowUpRight
+              size={16}
+              className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
             />
-            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
-              Your next team is one listing away.
-            </h2>
-            <p className="relative mx-auto mt-3 max-w-lg text-background/70">
-              Whether you are looking to join or looking for teammates, Forge
-              gets you from idea to team faster.
-            </p>
-            <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/teams">Discover teams</Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-background/30 bg-transparent text-background hover:bg-background/10 hover:text-background"
-                asChild
+          </span>
+        </Link>
+        <div className="forge-panel overflow-hidden p-8 sm:p-10">
+          <p className="forge-eyebrow mb-8">03 / Assemble your crew</p>
+          <div className="space-y-2">
+            {[
+              "Frontend developer",
+              "Backend engineer",
+              "Product designer",
+              "AI / ML builder",
+            ].map((role, i) => (
+              <div
+                className="flex items-center justify-between rounded-lg border border-border bg-background p-3 font-mono text-xs"
+                key={role}
               >
-                <Link href="/teams/new">Post an opportunity</Link>
-              </Button>
-            </div>
+                <span className="text-muted-foreground">0{i + 1}</span>
+                <span>{role}</span>
+                <Code2 size={14} className="text-muted-foreground" />
+              </div>
+            ))}
           </div>
+          <h2 className="mt-8 text-2xl font-semibold">
+            Your idea. Their superpower.
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Define your open roles, review applications, and build a team with
+            different strengths.
+          </p>
+          <Button variant="outline" asChild className="mt-6">
+            <Link href="/teams/new">
+              Create a listing <ArrowRight size={14} className="ml-3" />
+            </Link>
+          </Button>
+        </div>
+      </section>
+      <section className="border-y border-border bg-accent text-black">
+        <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-4 py-14 sm:px-6 md:flex-row md:items-center">
+          <div>
+            <p className="mb-4 font-mono text-xs uppercase tracking-widest">
+              Your next chapter starts with a team.
+            </p>
+            <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              Let’s build something.
+            </h2>
+          </div>
+          <Button
+            asChild
+            size="lg"
+            className="border-black bg-black text-white hover:bg-black/80"
+          >
+            <Link href="/teams">
+              Find your people <ArrowUpRight className="ml-4 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
     </>

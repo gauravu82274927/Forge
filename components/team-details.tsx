@@ -213,7 +213,7 @@ export function TeamDetails() {
       </Link>
 
       {/* Header */}
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="forge-page-heading mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <CategoryBadge category={post.category} />

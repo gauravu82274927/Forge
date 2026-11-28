@@ -96,9 +96,10 @@ export function TeamsBrowser({ showAll = false }: { showAll?: boolean }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <div className="max-w-2xl">
+      <div className="forge-page-heading">
+        <p className="forge-eyebrow mb-4">Discover / Team directory</p>
         <h1 className="text-4xl font-extrabold tracking-tight">
-          Find your next team.
+          Your next commit starts here.
         </h1>
         <p className="mt-3 text-muted-foreground">
           Browse {showAll ? 'all' : 'open'} listings from students and developers building real

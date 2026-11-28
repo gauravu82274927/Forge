@@ -201,6 +201,7 @@ export function ListingForm({ editId }: { editId?: string }) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+      <p className="forge-eyebrow mb-4">Workspace / Project brief</p>
       <h1 className="text-3xl font-extrabold tracking-tight">
         {editId ? 'Edit your listing' : 'Post a team listing'}
       </h1>
@@ -216,7 +217,7 @@ export function ListingForm({ editId }: { editId?: string }) {
         </p>
       )}
 
-      <div className="mt-8 space-y-6">
+      <div className="forge-panel mt-8 space-y-6 p-5 sm:p-8">
         <div className="space-y-1.5">
           <Label htmlFor="title">Project title</Label>
           <Input
